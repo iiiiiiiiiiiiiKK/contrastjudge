@@ -263,7 +263,7 @@ contain the expected content, that a `.css` download starts, that the batch tabl
 mode survives a reload, that there is no horizontal overflow at 390px, that the workspace collapses to
 one column on a phone, and that the page logs zero console errors.
 
-Last run: **32/32 checks passed** against the production deployment, in English and Chinese.
+Last run: **33/33 checks passed** against the production deployment, in English and Chinese.
 
 ## Deployment
 
