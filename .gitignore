@@ -29,5 +29,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Generated screenshots stay out of the build; docs/screenshots is curated and committed
-docs/screenshots/*.tmp.png
+# Screenshots: the E2E suite writes PNGs, but only the optimised WebP files are committed.
+# Run `python scripts/optimize-screenshots.py` after `npm run test:e2e` to regenerate them.
+docs/screenshots/*.png
