@@ -33,13 +33,50 @@ function hexToRgb(hex) {
 
 // A deterministic spread: extremes, primaries, common UI greys and the awkward near-threshold greys.
 const palette = [
-  '#000000', '#ffffff', '#808080', '#767676', '#777777', '#595959', '#5a5a5a',
-  '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff',
-  '#118ab2', '#06d6a0', '#ffd166', '#ef476f', '#073b4c', '#f8f9fa', '#212529',
-  '#1f4fd8', '#e5ecff', '#0b6b3a', '#e0f5e8', '#b3261e', '#fdecea',
-  '#010101', '#0a0a0a', '#101010', '#1a1a1a', '#333333', '#4d4d4d',
-  '#8a8a8a', '#b0b0b0', '#cccccc', '#e6e6e6', '#f2f2f2', '#fafafa',
-  '#7f7f7f', '#7e7e7e', '#767575', '#757676', '#3d3d3d', '#c0c0c0',
+  '#000000',
+  '#ffffff',
+  '#808080',
+  '#767676',
+  '#777777',
+  '#595959',
+  '#5a5a5a',
+  '#ff0000',
+  '#00ff00',
+  '#0000ff',
+  '#ffff00',
+  '#00ffff',
+  '#ff00ff',
+  '#118ab2',
+  '#06d6a0',
+  '#ffd166',
+  '#ef476f',
+  '#073b4c',
+  '#f8f9fa',
+  '#212529',
+  '#1f4fd8',
+  '#e5ecff',
+  '#0b6b3a',
+  '#e0f5e8',
+  '#b3261e',
+  '#fdecea',
+  '#010101',
+  '#0a0a0a',
+  '#101010',
+  '#1a1a1a',
+  '#333333',
+  '#4d4d4d',
+  '#8a8a8a',
+  '#b0b0b0',
+  '#cccccc',
+  '#e6e6e6',
+  '#f2f2f2',
+  '#fafafa',
+  '#7f7f7f',
+  '#7e7e7e',
+  '#767575',
+  '#757676',
+  '#3d3d3d',
+  '#c0c0c0',
 ];
 
 const pairs = [];
@@ -95,4 +132,7 @@ const target = path.join(__dirname, '..', 'tests', 'fixtures', 'reference-contra
 fs.mkdirSync(path.dirname(target), { recursive: true });
 fs.writeFileSync(target, JSON.stringify(output, null, 1));
 console.log('pairs:', pairs.length, 'crossChecks:', crossChecks.length);
-console.log('all cross checks equal:', crossChecks.every((check) => check.equal));
+console.log(
+  'all cross checks equal:',
+  crossChecks.every((check) => check.equal),
+);

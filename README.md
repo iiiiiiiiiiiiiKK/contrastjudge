@@ -328,9 +328,27 @@ The tool must meet the bar it measures. Verified in the E2E suite and by hand:
 - Focus rings use two-tone outlines that stay visible on both light and dark surfaces.
 - Touch targets are ≥44px on the primary controls (≥34px for secondary chips).
 - `prefers-reduced-motion` disables transitions and animation.
+- Accessible names start with the visible label (WCAG 2.5.3), so voice control works.
+- The horizontally scrollable batch table is focusable, so keyboard users can scroll it.
 
-Automated checks are a floor, not a ceiling. If you hit a barrier with a screen reader or a keyboard,
-please [open an issue](https://github.com/iiiiiiiiiiiKK/contrastjudge/issues).
+### Automated audit
+
+`npm run audit:a11y` runs **axe-core** (WCAG 2.0/2.1/2.2 A + AA and best-practice rules) against seven
+page states of a running deployment: the workspace in light mode, all four tabs, dark mode, the
+invalid-input error state, and an iPhone 14 viewport.
+
+```bash
+LIVE_URL=https://iiiiiiiiiiiiikk.github.io/contrastjudge/ npm run audit:a11y
+```
+
+Current result: **7/7 page states clean, 0 violations.** Two real issues were found and fixed while
+building this: the header brand link and the suggestion chips had `aria-label`s that did not match
+their visible text (2.5.3), and the batch table wrapper was a scroll container without keyboard
+access.
+
+Automated checks are a floor, not a ceiling — axe catches a minority of genuine barriers. If you hit
+one with a screen reader or a keyboard, please
+[open an issue](https://github.com/iiiiiiiiiiiKK/contrastjudge/issues).
 
 ## Privacy
 

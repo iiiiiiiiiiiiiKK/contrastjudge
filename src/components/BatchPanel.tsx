@@ -175,7 +175,12 @@ export function BatchPanel({ onCopy, onNotify }: BatchPanelProps) {
                 </p>
               </div>
             ) : (
-              <div className="batch-table-wrap">
+              <div
+                className="batch-table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Batch results table (scrollable)"
+              >
                 <table className="data-table">
                   <caption className="visually-hidden">Batch contrast results: {results.length} pairs</caption>
                   <thead>

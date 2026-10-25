@@ -67,7 +67,11 @@ async function setPair(page, fg, bg) {
   await page.getByRole('button', { name: /Save foreground/i }).click();
   await page.getByRole('tab', { name: /Palette/i }).click();
   const css = (await page.getByLabel('CSS custom properties').textContent()) ?? '';
-  record('CSS export contains :root and a hex value', css.includes(':root {') && /#[0-9A-F]{6}/.test(css), css.split('\n')[1] ?? '');
+  record(
+    'CSS export contains :root and a hex value',
+    css.includes(':root {') && /#[0-9A-F]{6}/.test(css),
+    css.split('\n')[1] ?? '',
+  );
   const jsonText = (await page.getByLabel(/JSON design tokens/).textContent()) ?? '{}';
   let jsonOk = false;
   try {
@@ -81,7 +85,11 @@ async function setPair(page, fg, bg) {
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: /^Download \.css$/i }).click();
   const download = await downloadPromise;
-  record('CSS download works', download.suggestedFilename() === 'contrastjudge-tokens.css', download.suggestedFilename());
+  record(
+    'CSS download works',
+    download.suggestedFilename() === 'contrastjudge-tokens.css',
+    download.suggestedFilename(),
+  );
 
   // Batch
   await page.getByRole('tab', { name: /Batch/i }).click();
@@ -122,7 +130,9 @@ async function setPair(page, fg, bg) {
   record(
     'iPhone: workspace stacks into one column',
     Boolean(first && second && second.y > first.y + first.height - 5),
-    first && second ? `col1 y=${Math.round(first.y)} h=${Math.round(first.height)}, col2 y=${Math.round(second.y)}` : 'missing',
+    first && second
+      ? `col1 y=${Math.round(first.y)} h=${Math.round(first.height)}, col2 y=${Math.round(second.y)}`
+      : 'missing',
   );
 
   record('iPhone: X link visible in header', await mobile.getByRole('link', { name: /Author on X/i }).isVisible());

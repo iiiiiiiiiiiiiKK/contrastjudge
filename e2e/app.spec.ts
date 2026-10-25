@@ -72,7 +72,7 @@ test.describe('contrast maths in the browser', () => {
     await page.goto('/');
     await setColours(page, '#112233', '#f0f0f0');
     const before = await ratioValue(page).textContent();
-    await page.getByRole('button', { name: /Swap foreground and background/i }).click();
+    await page.getByRole('button', { name: /^Swap colours$/i }).click();
     await expect(page.getByLabel('Foreground (text)', { exact: true })).toHaveValue('#f0f0f0');
     await expect(ratioValue(page)).toHaveText(before ?? '');
   });
@@ -104,8 +104,8 @@ test.describe('accessibility suggestions', () => {
 
     const card = page.locator('#suggestions');
     const suggestion = card.locator('button.suggestion').first();
-    const label = await suggestion.getAttribute('aria-label');
-    expect(label).toMatch(/ratio \d+\.\d{2}:1/);
+    // The accessible name starts with the visible hex and ratio (WCAG 2.5.3 Label in Name).
+    await expect(suggestion).toHaveAccessibleName(/^#[0-9A-F]{6} \d+\.\d{2}:1/);
     await suggestion.click();
 
     await expect(verdictBadge(page)).toHaveText(/Passes AA/);

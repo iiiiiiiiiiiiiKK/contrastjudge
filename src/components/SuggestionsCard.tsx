@@ -49,15 +49,20 @@ function SuggestChip({
       type="button"
       className="suggestion"
       onClick={() => onApply(suggestion.color)}
-      aria-label={`Use ${suggestion.hex} as the ${role} colour, ratio ${formatRatio(suggestion.ratio)}, ${directionLabel(suggestion)}`}
+      // No aria-label: WCAG 2.5.3 requires the accessible name to contain the visible label, and the
+      // chip already shows the hex, the ratio and the direction. Extra context is appended as
+      // visually hidden text so the name still starts with what a sighted user reads.
     >
       <span className="suggestion__chip" style={{ background: chipBackground, color: chipText }}>
         {suggestion.hex}
-      </span>
+      </span>{' '}
       <span className="suggestion__meta">
-        <span className="suggestion__ratio">{formatRatio(suggestion.ratio)}</span>
-        <span>{directionLabel(suggestion)}</span>
+        <span className="suggestion__ratio">{formatRatio(suggestion.ratio)}</span>{' '}
+        <span>{directionLabel(suggestion)}</span>{' '}
+        {/* The separator keeps the computed accessible name readable ("#817272 4.58:1 …") while the
+            flex/grid layout keeps the visual spacing. */}
       </span>
+      <span className="visually-hidden">— use as the {role} colour</span>
     </button>
   );
 }

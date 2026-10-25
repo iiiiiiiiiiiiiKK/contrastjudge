@@ -171,12 +171,9 @@ function AppShell() {
                     />
 
                     <div className="button-row" style={{ justifyContent: 'center' }}>
-                      <button
-                        type="button"
-                        className="button"
-                        onClick={judge.swap}
-                        aria-label="Swap foreground and background colours"
-                      >
+                      {/* The visible text is the accessible name: adding an aria-label with different
+                          wording would break WCAG 2.5.3 (Label in Name). */}
+                      <button type="button" className="button" onClick={judge.swap}>
                         <SwapIcon />
                         Swap colours
                       </button>

@@ -63,7 +63,7 @@ describe('ContrastJudge app shell', () => {
     expect(fgInput()).toHaveValue('#5b6478');
     expect(bgInput()).toHaveValue('#ffffff');
 
-    await user.click(screen.getByRole('button', { name: /Swap foreground and background/i }));
+    await user.click(screen.getByRole('button', { name: /^Swap colours$/i }));
 
     expect(fgInput()).toHaveValue('#ffffff');
     expect(bgInput()).toHaveValue('#5b6478');
@@ -104,10 +104,12 @@ describe('ContrastJudge app shell', () => {
     await user.clear(input);
     await user.type(input, '#aaaaaa');
 
-    const suggestions = await screen.findAllByRole('button', { name: /Use #/i });
+    // The chip's accessible name starts with its visible text (WCAG 2.5.3): hex, then the ratio.
+    const suggestions = await screen.findAllByRole('button', { name: /^#[0-9A-F]{6} \d+\.\d{2}:1/ });
     expect(suggestions.length).toBeGreaterThan(0);
     for (const suggestion of suggestions.slice(0, 3)) {
-      expect(suggestion).toHaveAccessibleName(/ratio \d+\.\d+:1/);
+      expect(suggestion).toHaveAccessibleName(/\d+\.\d{2}:1/);
+      expect(suggestion).toHaveAccessibleName(/use as the (text|surface) colour/i);
     }
   });
 
