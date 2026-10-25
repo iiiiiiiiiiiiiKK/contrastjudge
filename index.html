@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>ContrastJudge — WCAG 2.2 colour contrast &amp; accessibility checker</title>
+    <meta
+      name="description"
+      content="ContrastJudge checks colour contrast against WCAG 2.2 (AA &amp; AAA) thresholds, simulates colour-vision deficiency, suggests accessible alternatives and exports CSS variables. All maths runs locally in your browser."
+    />
+    <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ContrastJudge — WCAG 2.2 colour contrast checker" />
+    <meta
+      property="og:description"
+      content="Local-first WCAG 2.2 contrast checks, colour-vision simulation, accessible colour suggestions, palette export and batch audits."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@0xkillcoin" />
+    <script>
+      // Apply the stored theme before first paint to avoid a flash of the wrong theme.
+      // The value is written as a plain string by useTheme; tolerate older JSON-encoded values too.
+      (function () {
+        try {
+          var raw = localStorage.getItem('contrastjudge:theme');
+          if (raw && raw.charAt(0) === '"') {
+            try {
+              raw = JSON.parse(raw);
+            } catch (inner) {
+              raw = null;
+            }
+          }
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = raw === 'light' || raw === 'dark' ? raw : prefersDark ? 'dark' : 'light';
+          document.documentElement.dataset.theme = theme;
+        } catch (error) {
+          document.documentElement.dataset.theme = 'light';
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript> ContrastJudge needs JavaScript because every calculation runs locally in your browser. </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
