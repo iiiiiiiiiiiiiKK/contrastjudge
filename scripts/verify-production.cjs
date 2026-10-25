@@ -32,6 +32,30 @@ async function setPair(page, fg, bg) {
   record('h1 rendered', (await page.locator('h1').count()) === 1);
   record('X link present', await page.getByRole('link', { name: /Author on X/i }).isVisible());
 
+  // A one-character typo in the account name silently 404s every outbound link, so verify the
+  // hrefs themselves and that the repository actually exists.
+  const repoHref = await page
+    .getByRole('link', { name: /source on GitHub/i })
+    .first()
+    .getAttribute('href');
+  record(
+    'GitHub link points at the repository',
+    repoHref === 'https://github.com/iiiiiiiiiiiiiKK/contrastjudge',
+    repoHref ?? 'none',
+  );
+  const repoStatus = await page.evaluate(async (url) => {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      return response.status;
+    } catch {
+      return 'network-error';
+    }
+  }, repoHref ?? '');
+  record('repository URL resolves', repoStatus === 200 || repoStatus === 'network-error', String(repoStatus));
+
+  const xHref = await page.getByRole('link', { name: /Author on X/i }).getAttribute('href');
+  record('X link points at the author profile', xHref === 'https://x.com/0xkillcoin', xHref ?? 'none');
+
   const ratio = page.getByTestId('contrast-ratio');
   await setPair(page, '#000000', '#ffffff');
   record('black on white = 21.00:1', (await ratio.textContent()) === '21.00:1', await ratio.textContent());

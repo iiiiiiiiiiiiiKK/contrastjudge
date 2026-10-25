@@ -4,7 +4,7 @@ import { useI18n } from '../i18n';
 
 export const AUTHOR_X_URL = 'https://x.com/0xkillcoin';
 export const AUTHOR_X_HANDLE = '@0xkillcoin';
-export const REPO_URL = 'https://github.com/iiiiiiiiiiiKK/contrastjudge';
+export const REPO_URL = 'https://github.com/iiiiiiiiiiiiiKK/contrastjudge';
 
 interface HeaderProps {
   readonly theme: ThemeMode;

@@ -35,6 +35,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Link and slug consistency
+        run: npm run check:links
+
       - name: Unit tests
         run: npm test
 

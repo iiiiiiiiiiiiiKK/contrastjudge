@@ -10,11 +10,11 @@
 
 [**在线使用**](https://iiiiiiiiiiiiikk.github.io/contrastjudge/) ·
 [计算方法](https://iiiiiiiiiiiiikk.github.io/contrastjudge/#learn) ·
-[反馈问题](https://github.com/iiiiiiiiiiiKK/contrastjudge/issues) ·
+[反馈问题](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/issues) ·
 [作者 𝕏 / @0xkillcoin](https://x.com/0xkillcoin)
 
-[![CI](https://github.com/iiiiiiiiiiiKK/contrastjudge/actions/workflows/ci.yml/badge.svg)](https://github.com/iiiiiiiiiiiKK/contrastjudge/actions/workflows/ci.yml)
-[![Deploy](https://github.com/iiiiiiiiiiiKK/contrastjudge/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/iiiiiiiiiiiKK/contrastjudge/actions/workflows/deploy-pages.yml)
+[![CI](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/actions/workflows/ci.yml/badge.svg)](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/actions/workflows/ci.yml)
+[![Deploy](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/actions/workflows/deploy-pages.yml)
 [![WCAG 2.2](https://img.shields.io/badge/WCAG-2.2%20AA%20%26%20AAA-0B6B3A)](https://www.w3.org/TR/WCAG22/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-1F4FD8)](LICENSE)
 
@@ -150,7 +150,7 @@ ContrastJudge 由预览控件推导该判定，所以改字号会实时改变被
 ## 快速开始
 
 ```bash
-git clone https://github.com/iiiiiiiiiiiKK/contrastjudge.git
+git clone https://github.com/iiiiiiiiiiiiiKK/contrastjudge.git
 cd contrastjudge
 npm ci
 npm run dev
@@ -329,7 +329,7 @@ LIVE_URL=https://iiiiiiiiiiiiikk.github.io/contrastjudge/ npm run audit:a11y
 以及语言切换按钮最初的无障碍名称没有包含可见文字「中文 / EN」（同样违反 2.5.3）。
 
 自动化检查只是下限 —— axe 只能发现少数真实障碍。如果你用读屏或键盘遇到问题，
-请[提一个 issue](https://github.com/iiiiiiiiiiiKK/contrastjudge/issues)。
+请[提一个 issue](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/issues)。
 
 ## 隐私
 
