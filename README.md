@@ -12,11 +12,11 @@ export the result as CSS variables or JSON tokens.
 
 [**Live app**](https://iiiiiiiiiiiiikk.github.io/contrastjudge/) ·
 [Method notes](https://iiiiiiiiiiiiikk.github.io/contrastjudge/#learn) ·
-[Report a bug](https://github.com/iiiiiiiiiiiKK/contrastjudge/issues) ·
+[Report a bug](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/issues) ·
 [Author on 𝕏 / @0xkillcoin](https://x.com/0xkillcoin)
 
-[![CI](https://github.com/iiiiiiiiiiiKK/contrastjudge/actions/workflows/ci.yml/badge.svg)](https://github.com/iiiiiiiiiiiKK/contrastjudge/actions/workflows/ci.yml)
-[![Deploy](https://github.com/iiiiiiiiiiiKK/contrastjudge/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/iiiiiiiiiiiKK/contrastjudge/actions/workflows/deploy-pages.yml)
+[![CI](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/actions/workflows/ci.yml/badge.svg)](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/actions/workflows/ci.yml)
+[![Deploy](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/actions/workflows/deploy-pages.yml)
 [![WCAG 2.2](https://img.shields.io/badge/WCAG-2.2%20AA%20%26%20AAA-0B6B3A)](https://www.w3.org/TR/WCAG22/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-1F4FD8)](LICENSE)
 [![No tracking](https://img.shields.io/badge/analytics-none-B3261E)](#privacy)
@@ -164,7 +164,7 @@ A contrast calculator answers exactly one question. It is worth being blunt abou
 ## Getting started
 
 ```bash
-git clone https://github.com/iiiiiiiiiiiKK/contrastjudge.git
+git clone https://github.com/iiiiiiiiiiiiiKK/contrastjudge.git
 cd contrastjudge
 npm ci
 npm run dev
@@ -348,7 +348,7 @@ access.
 
 Automated checks are a floor, not a ceiling — axe catches a minority of genuine barriers. If you hit
 one with a screen reader or a keyboard, please
-[open an issue](https://github.com/iiiiiiiiiiiKK/contrastjudge/issues).
+[open an issue](https://github.com/iiiiiiiiiiiiiKK/contrastjudge/issues).
 
 ## Privacy
 
