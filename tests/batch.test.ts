@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { BATCH_EXAMPLE, evaluateBatch, extractBatchColors, parseBatch, summarizeBatch } from '../src/lib/batch';
+import { createTranslator, translateMessage } from '../src/i18n/format';
+
+const tEn = createTranslator('en');
+const tZh = createTranslator('zh');
+const tm = (message: Parameters<typeof translateMessage>[1]) => translateMessage(tEn, message);
+const tmZh = (message: Parameters<typeof translateMessage>[1]) => translateMessage(tZh, message);
 
 describe('parseBatch', () => {
   it('parses the documented line formats', () => {
@@ -28,21 +34,24 @@ describe('parseBatch', () => {
     expect(issues).toHaveLength(0);
   });
 
-  it('reports each unparseable line with its number and reason', () => {
+  it('reports each unparseable line with its number and a translatable reason', () => {
     const { rows, issues } = parseBatch(
       ['#111 on #fff', 'only-one-colour', '#zzz on #fff', '#111 on #zzz'].join('\n'),
     );
     expect(rows).toHaveLength(1);
     expect(issues).toHaveLength(3);
     expect(issues[0]?.line).toBe(2);
-    expect(issues[0]?.message).toMatch(/two colours/i);
-    expect(issues[1]?.message).toMatch(/^Foreground: /);
-    expect(issues[2]?.message).toMatch(/^Background: /);
+    expect(tm(issues[0]!.message)).toMatch(/two colours/i);
+    expect(tm(issues[1]!.message)).toMatch(/^Foreground: /);
+    expect(tm(issues[2]!.message)).toMatch(/^Background: /);
+    // The Chinese dictionary must cover the same keys, otherwise the UI would show English.
+    expect(tmZh(issues[0]!.message)).toMatch(/找不到两个颜色/);
   });
 
   it('labels unnamed rows by line number', () => {
     const { rows } = parseBatch('#111 on #fff');
-    expect(rows[0]?.label).toBe('Line 1');
+    // Unnamed rows carry a "#n" marker that the UI renders as "Line n" / "第 n 行".
+    expect(rows[0]?.label).toBe('#1');
   });
 
   it('respects default font settings', () => {
@@ -80,11 +89,13 @@ describe('evaluateBatch', () => {
     expect(muted?.foregroundHex).toBe('#9AA4B2');
   });
 
-  it('explains each threshold outcome', () => {
+  it('explains each threshold outcome in both languages', () => {
     for (const row of results) {
       for (const threshold of row.results) {
-        expect(threshold.explanation).toMatch(/Passes|Fails/);
-        expect(threshold.explanation).toContain(`${threshold.threshold}:1`);
+        const english = tm(threshold.explanation);
+        expect(english).toMatch(/Passes|Fails/);
+        expect(english).toContain(`${threshold.threshold}:1`);
+        expect(tmZh(threshold.explanation)).toMatch(/通过|未通过/);
       }
     }
   });

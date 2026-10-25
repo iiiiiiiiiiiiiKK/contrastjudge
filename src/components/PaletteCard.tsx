@@ -3,6 +3,7 @@ import type { PaletteEntry } from '../types';
 import type { RGBA } from '../lib/color';
 import { formatRgb, rgbToHex, rgbToHsl, trimNumber } from '../lib/color';
 import { contrastRatio, formatRatio } from '../lib/wcag';
+import { useI18n } from '../i18n';
 import { CvdSwatchRow } from './CvdCard';
 import { EmptyState } from './Card';
 import { CopyIcon, PaletteIcon, PlusIcon, TrashIcon } from './Icons';
@@ -12,7 +13,7 @@ interface PaletteCardProps {
   readonly foreground: RGBA | null;
   readonly background: RGBA | null;
   readonly pageBackground: RGBA;
-  readonly onAdd: (name: string, color: RGBA, role: string) => void;
+  readonly onAdd: (name: string, color: RGBA, role: 'text' | 'surface') => void;
   readonly onRemove: (id: string) => void;
   readonly onRename: (id: string, name: string) => void;
   readonly onUse: (entry: PaletteEntry, role: 'foreground' | 'background') => void;
@@ -30,14 +31,30 @@ export function PaletteCard({
   onUse,
   onCopy,
 }: PaletteCardProps) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
   const addCurrentPair = () => {
-    if (foreground) onAdd(name === '' ? `Text ${palette.length + 1}` : `${name} text`, foreground, 'text');
+    const prefix = name.trim();
+    if (foreground) {
+      onAdd(
+        prefix === ''
+          ? t('palette.textFallback', { n: palette.length + 1 })
+          : t('palette.textPrefix', { name: prefix }),
+        foreground,
+        'text',
+      );
+    }
     if (background) {
-      onAdd(name === '' ? `Surface ${palette.length + 1}` : `${name} surface`, background, 'surface');
+      onAdd(
+        prefix === ''
+          ? t('palette.surfaceFallback', { n: palette.length + 1 })
+          : t('palette.surfacePrefix', { name: prefix }),
+        background,
+        'surface',
+      );
     }
     setName('');
   };
@@ -48,21 +65,21 @@ export function PaletteCard({
         <div className="card__header">
           <h2 className="card__title">
             <PlusIcon style={{ width: 18, height: 18 }} />
-            Save the current pair
+            {t('palette.addTitle')}
           </h2>
         </div>
         <div className="card__body">
           <div className="field-row">
             <div className="field-row__grow">
               <label className="visually-hidden" htmlFor="palette-name">
-                Palette entry name prefix
+                {t('palette.nameLabel')}
               </label>
               <input
                 id="palette-name"
                 className="text-input"
                 type="text"
                 value={name}
-                placeholder="e.g. Marketing site"
+                placeholder={t('palette.namePlaceholder')}
                 onChange={(event) => setName(event.target.value)}
               />
             </div>
@@ -73,12 +90,11 @@ export function PaletteCard({
               disabled={!foreground && !background}
             >
               <PlusIcon />
-              Add both colours
+              {t('palette.addBoth')}
             </button>
           </div>
           <p className="small muted" style={{ marginTop: '0.5rem' }}>
-            Colours are stored in this browser only (localStorage). Nothing is uploaded, and clearing site data
-            removes them permanently.
+            {t('palette.storageNote')}
           </p>
         </div>
       </div>
@@ -86,7 +102,7 @@ export function PaletteCard({
       {palette.length === 0 ? (
         <EmptyState
           icon={<PaletteIcon />}
-          title="No saved colours yet"
+          title={t('palette.emptyTitle')}
           action={
             <button
               type="button"
@@ -95,12 +111,11 @@ export function PaletteCard({
               disabled={!foreground && !background}
             >
               <PlusIcon />
-              Save the current pair
+              {t('palette.savePair')}
             </button>
           }
         >
-          Saved colours show their HEX, RGB and HSL values, contrast against the page background, and how they look
-          with each colour-vision deficiency. They feed the CSS and JSON exporters.
+          {t('palette.emptyBody')}
         </EmptyState>
       ) : (
         <ul className="palette-list">
@@ -115,7 +130,7 @@ export function PaletteCard({
                   {editingId === entry.id ? (
                     <div className="field-row">
                       <label className="visually-hidden" htmlFor={`rename-${entry.id}`}>
-                        New name for {entry.name}
+                        {t('palette.newNameAria', { name: entry.name })}
                       </label>
                       <input
                         id={`rename-${entry.id}`}
@@ -139,7 +154,7 @@ export function PaletteCard({
                           setEditingId(null);
                         }}
                       >
-                        Save
+                        {t('common.save')}
                       </button>
                     </div>
                   ) : (
@@ -160,8 +175,8 @@ export function PaletteCard({
                         setEditingId(entry.id);
                         setEditingName(entry.name);
                       }}
-                      aria-label={`Rename ${entry.name}`}
-                      title="Click to rename"
+                      aria-label={t('palette.renameAria', { name: entry.name })}
+                      title={t('palette.renameHint')}
                     >
                       {entry.name}
                     </button>
@@ -169,29 +184,29 @@ export function PaletteCard({
                   <span className="palette-item__hex">
                     {hex} · hsl({trimNumber(hsl.h, 0)} {trimNumber(hsl.s, 0)}% {trimNumber(hsl.l, 0)}%)
                   </span>
-                  <span className="small muted">{formatRatio(ratio)} on page background</span>
+                  <span className="small muted">{t('palette.onPageBackground', { ratio: formatRatio(ratio) })}</span>
                   <CvdSwatchRow color={entry.color} />
                   <div className="palette-item__tools">
                     <button type="button" className="button button--sm" onClick={() => onUse(entry, 'foreground')}>
-                      Use as text
+                      {t('palette.useAsText')}
                     </button>
                     <button type="button" className="button button--sm" onClick={() => onUse(entry, 'background')}>
-                      Use as surface
+                      {t('palette.useAsSurface')}
                     </button>
                     <button
                       type="button"
                       className="button button--sm button--quiet"
                       onClick={() => onCopy(hex, entry.name)}
-                      aria-label={`Copy ${hex} to the clipboard`}
+                      aria-label={t('palette.copyAria', { hex })}
                     >
                       <CopyIcon />
-                      Copy
+                      {t('common.copy')}
                     </button>
                     <button
                       type="button"
                       className="button button--sm button--danger"
                       onClick={() => onRemove(entry.id)}
-                      aria-label={`Remove ${entry.name} from the palette`}
+                      aria-label={t('palette.removeAria', { name: entry.name })}
                     >
                       <TrashIcon />
                     </button>

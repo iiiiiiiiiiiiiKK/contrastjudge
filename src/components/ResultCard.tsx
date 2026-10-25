@@ -1,5 +1,7 @@
 import type { ContrastReport, ThresholdResult } from '../lib/wcag';
 import { formatRatio, roundRatio } from '../lib/wcag';
+import { useI18n } from '../i18n';
+import type { TranslationKey } from '../i18n';
 import { AlertIcon, CheckIcon, CrossIcon, ContrastIcon, InfoIcon, SparkleIcon } from './Icons';
 
 interface ResultCardProps {
@@ -20,42 +22,28 @@ function StatusCell({ passes, label }: { passes: boolean; label: string }) {
   );
 }
 
-function thresholdLabel(result: ThresholdResult): string {
-  if (result.kind === 'non-text') return 'UI & graphics (1.4.11 AA)';
-  const size = result.size === 'large' ? 'Large text' : 'Normal text';
-  return `${size} (${result.criterion} ${result.level})`;
-}
-
-function Row({ result }: { result: ThresholdResult }) {
-  return (
-    <tr>
-      <th scope="row">{thresholdLabel(result)}</th>
-      <td className="ratio-cell">{result.threshold}:1</td>
-      <td className="ratio-cell">{formatRatio(result.ratio)}</td>
-      <td>
-        <StatusCell passes={result.passes} label={result.passes ? 'Pass' : 'Fail'} />
-        <span className="visually-hidden"> — {result.explanation}</span>
-      </td>
-    </tr>
-  );
+function thresholdLabelKey(result: ThresholdResult): TranslationKey {
+  if (result.kind === 'non-text') return 'result.thresholdNonText';
+  return result.size === 'large' ? 'result.thresholdLarge' : 'result.thresholdNormal';
 }
 
 export function ResultCard({ report, level, onLevelChange, fontSizePx, bold, hasAlpha }: ResultCardProps) {
+  const { t, tm } = useI18n();
+
   if (!report) {
     return (
       <section className="card result" aria-labelledby="result-heading">
         <header className="card__header">
           <h2 className="card__title" id="result-heading">
             <ContrastIcon />
-            Contrast result
+            {t('result.title')}
           </h2>
         </header>
         <div className="card__body">
           <div className="callout callout--warn" role="status">
             <AlertIcon />
             <div>
-              <strong>No result yet.</strong> Fix the colour value marked in red so ContrastJudge can calculate a
-              ratio. Invalid input is never converted into a guessed colour.
+              <strong>{t('result.emptyTitle')}</strong> {t('result.emptyBody')}
             </div>
           </div>
         </div>
@@ -70,28 +58,36 @@ export function ResultCard({ report, level, onLevelChange, fontSizePx, bold, has
   const passes = activeResult?.passes ?? false;
   const meterPercent = Math.min(100, Math.max(0, ((report.ratio - 1) / 20) * 100));
   const verdictTone = passes ? 'pass' : report.passesAaLarge ? 'warn' : 'fail';
+
+  const rowLabel = (result: ThresholdResult) =>
+    t(thresholdLabelKey(result), { criterion: result.criterion, level: result.level });
+
   return (
     <section className="card result" aria-labelledby="result-heading">
       <h2 className="visually-hidden" id="result-heading">
-        Contrast result
+        {t('result.title')}
       </h2>
       <div className="result__hero">
         <div className="result__ratio">
-          <span className="result__ratio-label">Contrast ratio</span>
+          <span className="result__ratio-label">{t('result.ratioLabel')}</span>
           <span className="result__ratio-value" data-testid="contrast-ratio">
             {formatRatio(report.ratio)}
           </span>
           <span className="result__sub">
-            Target {activeThreshold}:1 · {report.largeText ? 'large text' : 'normal text'} · Level {level}
+            {t('result.targetLine', {
+              threshold: activeThreshold,
+              size: t(report.largeText ? 'result.sizeLarge' : 'result.sizeNormal'),
+              level,
+            })}
           </span>
         </div>
         <div className="result__verdict">
           <span className={`verdict-badge verdict-badge--${verdictTone}`}>
             {passes ? <CheckIcon /> : <CrossIcon />}
-            {passes ? `Passes ${level}` : `Fails ${level}`}
+            {t(passes ? 'result.passesLevel' : 'result.failsLevel', { level })}
           </span>
           <span className="result__sub">
-            Best level: <strong>{report.bestLevel}</strong>
+            {t('result.bestLevel')} <strong>{report.bestLevel}</strong>
           </span>
         </div>
       </div>
@@ -99,7 +95,7 @@ export function ResultCard({ report, level, onLevelChange, fontSizePx, bold, has
       <div
         className="result__meter"
         role="img"
-        aria-label={`Contrast ratio ${formatRatio(report.ratio)} on a scale from 1:1 to 21:1`}
+        aria-label={t('result.scaleAria', { ratio: formatRatio(report.ratio) })}
       >
         <div className="result__meter-fill" style={{ width: `${meterPercent}%` }} />
       </div>
@@ -114,14 +110,14 @@ export function ResultCard({ report, level, onLevelChange, fontSizePx, bold, has
       <div className="card__body stack">
         <div className="inline" style={{ justifyContent: 'space-between' }}>
           <span className="small muted" id="level-label">
-            Judge against
+            {t('result.judgeAgainst')}
           </span>
           <div className="segmented" role="group" aria-labelledby="level-label">
             <button
               type="button"
               onClick={() => onLevelChange('AA')}
               aria-pressed={level === 'AA'}
-              aria-label="Check against WCAG 2.2 level AA"
+              aria-label={t('result.levelAAaria')}
             >
               AA
             </button>
@@ -129,7 +125,7 @@ export function ResultCard({ report, level, onLevelChange, fontSizePx, bold, has
               type="button"
               onClick={() => onLevelChange('AAA')}
               aria-pressed={level === 'AAA'}
-              aria-label="Check against WCAG 2.2 level AAA"
+              aria-label={t('result.levelAAAaria')}
             >
               AAA
             </button>
@@ -138,62 +134,78 @@ export function ResultCard({ report, level, onLevelChange, fontSizePx, bold, has
 
         <table className="result__table">
           <caption>
-            Every threshold that applies to this pair, measured at {fontSizePx}px{bold ? ' bold' : ''}. Thresholds are
-            compared against the unrounded ratio.
+            {t('result.tableCaption', {
+              size: fontSizePx,
+              bold: bold ? `, ${t('preview.bold').toLowerCase()}` : '',
+            })}
           </caption>
           <thead>
             <tr>
-              <th scope="col">Requirement</th>
-              <th scope="col">Minimum</th>
-              <th scope="col">This pair</th>
-              <th scope="col">Outcome</th>
+              <th scope="col">{t('result.colRequirement')}</th>
+              <th scope="col">{t('result.colMinimum')}</th>
+              <th scope="col">{t('result.colPair')}</th>
+              <th scope="col">{t('result.colOutcome')}</th>
             </tr>
           </thead>
           <tbody>
             {report.textResults.map((result) => (
-              <Row key={result.id} result={result} />
+              <tr key={result.id}>
+                <th scope="row">{rowLabel(result)}</th>
+                <td className="ratio-cell">{result.threshold}:1</td>
+                <td className="ratio-cell">{formatRatio(result.ratio)}</td>
+                <td>
+                  <StatusCell passes={result.passes} label={t(result.passes ? 'common.pass' : 'common.fail')} />
+                  <span className="visually-hidden"> — {tm(result.explanation)}</span>
+                </td>
+              </tr>
             ))}
-            <Row result={report.nonTextResult} />
+            <tr>
+              <th scope="row">{rowLabel(report.nonTextResult)}</th>
+              <td className="ratio-cell">{report.nonTextResult.threshold}:1</td>
+              <td className="ratio-cell">{formatRatio(report.nonTextResult.ratio)}</td>
+              <td>
+                <StatusCell
+                  passes={report.nonTextResult.passes}
+                  label={t(report.nonTextResult.passes ? 'common.pass' : 'common.fail')}
+                />
+                <span className="visually-hidden"> — {tm(report.nonTextResult.explanation)}</span>
+              </td>
+            </tr>
           </tbody>
         </table>
 
         {hasAlpha ? (
           <div className="callout callout--info">
             <InfoIcon />
-            <div>
-              A translucent colour was flattened onto its backdrop before measuring, which is what WCAG evaluates. The
-              effective pair is <code>{formatRatio(report.ratio)}</code>.
-            </div>
+            <div>{t('result.alphaCallout', { ratio: formatRatio(report.ratio) })}</div>
           </div>
         ) : null}
 
         <div>
           <h3 className="small" style={{ marginBottom: '0.45rem', fontWeight: 680 }}>
             <SparkleIcon style={{ width: 15, height: 15, verticalAlign: '-2px', marginRight: 4 }} />
-            What to do next
+            {t('result.nextSteps')}
           </h3>
           <ul className="advice">
-            {report.advice.map((item) => (
-              <li key={item}>
+            {report.advice.map((item, index) => (
+              <li key={`${item.key}-${index}`}>
                 <SparkleIcon />
-                <span>{item}</span>
+                <span>{tm(item)}</span>
               </li>
             ))}
           </ul>
         </div>
 
         <p className="small muted">
-          Ratio = (L<sub>lighter</sub> + 0.05) / (L<sub>darker</sub> + 0.05), computed from unrounded sRGB relative
-          luminance. A passing ratio means <em>this colour pair</em> meets the contrast success criterion — it is not
-          a statement that a whole page conforms to WCAG 2.2. See <a href="#learn">the method notes</a> for details.
+          {t('result.footerNote')} <a href="#learn">{t('result.footerLink')}</a>
         </p>
 
         <p className="visually-hidden" aria-live="polite">
-          {`Contrast ratio ${formatRatio(report.ratio)}. ${
-            passes ? `Passes level ${level}.` : `Fails level ${level}; needs ${activeThreshold}:1.`
-          }`}
+          {passes
+            ? t('result.liveAnnounceMeets', { ratio: formatRatio(report.ratio), level })
+            : t('result.liveAnnounceFails', { ratio: formatRatio(report.ratio) })}
         </p>
-        <p className="small muted mono">exact ratio: {roundRatio(report.ratio, 6).toFixed(6)}</p>
+        <p className="small muted mono">{t('result.exact', { value: roundRatio(report.ratio, 6).toFixed(6) })}</p>
       </div>
     </section>
   );

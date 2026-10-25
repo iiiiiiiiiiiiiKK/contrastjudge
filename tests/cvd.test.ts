@@ -8,6 +8,7 @@ import {
   suggestCvdSeparatedColor,
 } from '../src/lib/cvd';
 import { contrastRatio } from '../src/lib/wcag';
+import { createTranslator } from '../src/i18n/format';
 
 const RED = parseColorOrThrow('#ff0000');
 const GREEN = parseColorOrThrow('#00ff00');
@@ -125,11 +126,16 @@ describe('suggestCvdSeparatedColor', () => {
 });
 
 describe('CVD metadata', () => {
-  it('documents all four supported types with prevalence text', () => {
+  it('documents all four supported types with translated prevalence text', () => {
     expect(CVD_DEFINITIONS).toHaveLength(4);
-    for (const definition of CVD_DEFINITIONS) {
-      expect(definition.description.length).toBeGreaterThan(30);
-      expect(definition.prevalence.length).toBeGreaterThan(5);
+    for (const locale of ['en', 'zh'] as const) {
+      const translate = createTranslator(locale);
+      for (const definition of CVD_DEFINITIONS) {
+        expect(translate(definition.descriptionKey).length).toBeGreaterThan(20);
+        expect(translate(definition.prevalenceKey).length).toBeGreaterThan(5);
+        expect(translate(definition.nameKey).length).toBeGreaterThan(3);
+        expect(translate(definition.shortNameKey).length).toBeGreaterThan(0);
+      }
     }
   });
 });

@@ -14,6 +14,10 @@ import {
   roundRatio,
   srgbChannelToLinear,
 } from '../src/lib/wcag';
+import { createTranslator, translateMessage } from '../src/i18n/format';
+
+const t = createTranslator('en');
+const tm = (message: Parameters<typeof translateMessage>[1]) => translateMessage(t, message);
 
 const BLACK = parseColorOrThrow('#000000');
 const WHITE = parseColorOrThrow('#ffffff');
@@ -250,7 +254,8 @@ describe('report shape and advice', () => {
     expect(report.textResults).toHaveLength(4);
     expect(report.nonTextResult.id).toBe('aa-non-text');
     for (const result of [...report.textResults, report.nonTextResult]) {
-      expect(result.explanation.length).toBeGreaterThan(20);
+      // Explanations are translatable messages; resolve them to check the sentence is complete.
+      expect(tm(result.explanation).length).toBeGreaterThan(40);
       expect(result.threshold).toBeGreaterThan(1);
       expect(result.margin).toBeCloseTo(result.ratio - result.threshold, 12);
     }
@@ -264,8 +269,9 @@ describe('report shape and advice', () => {
       level: 'AA',
     });
     expect(report.passesAa).toBe(false);
-    expect(report.advice.join(' ')).toMatch(/Increase the ratio/);
-    expect(report.advice.join(' ')).toMatch(/4\.5:1|large/i);
+    const advice = report.advice.map((message) => tm(message)).join(' ');
+    expect(advice).toMatch(/Increase the ratio/);
+    expect(advice).toMatch(/4\.5:1|large/i);
   });
 
   it('marks an unreachable AAA target honestly', () => {

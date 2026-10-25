@@ -9,6 +9,7 @@ import {
   suggestForegroundColors,
 } from '../lib/suggest';
 import type { Suggestion } from '../lib/suggest';
+import { useI18n } from '../i18n';
 import { AlertIcon, SparkleIcon } from './Icons';
 import { Card } from './Card';
 
@@ -22,47 +23,47 @@ interface SuggestionsCardProps {
   readonly onApplyBackground: (color: RGBA) => void;
 }
 
-function directionLabel(suggestion: Suggestion): string {
-  if (suggestion.direction === 'unchanged') return 'Already passes';
-  const amount = Math.abs(suggestion.lightnessDelta).toFixed(1).replace(/\.0$/, '');
-  return `${suggestion.direction === 'darker' ? 'Darker' : 'Lighter'} by ${amount}%`;
-}
-
 function SuggestChip({
   suggestion,
-  role,
+  roleLabel,
+  roleKey,
   onApply,
   counterpart,
 }: {
   suggestion: Suggestion;
-  role: 'text' | 'surface';
+  roleLabel: string;
+  roleKey: 'text' | 'surface';
   onApply: (color: RGBA) => void;
-  /** The colour that stays fixed; drawn on top of / below the suggestion for a true preview. */
+  /** The colour that stays fixed; drawn under/over the suggestion for a true preview. */
   counterpart: RGBA;
 }) {
+  const { t } = useI18n();
   // The chip shows the suggested colour as a surface with the counterpart colour on top, so the
   // preview is exactly the pair the suggestion would create.
   const chipBackground = rgbToHex(suggestion.color);
   const chipText = rgbToHex(counterpart);
+  const amount = Math.abs(suggestion.lightnessDelta).toFixed(1).replace(/\.0$/, '');
+  const direction =
+    suggestion.direction === 'unchanged'
+      ? t('suggest.alreadyPasses')
+      : t(suggestion.direction === 'darker' ? 'suggest.darker' : 'suggest.lighter', { amount });
+
   return (
     <button
       type="button"
       className="suggestion"
       onClick={() => onApply(suggestion.color)}
       // No aria-label: WCAG 2.5.3 requires the accessible name to contain the visible label, and the
-      // chip already shows the hex, the ratio and the direction. Extra context is appended as
-      // visually hidden text so the name still starts with what a sighted user reads.
+      // chip already shows the hex, the ratio and the direction.
+      data-role={roleKey}
     >
       <span className="suggestion__chip" style={{ background: chipBackground, color: chipText }}>
         {suggestion.hex}
       </span>{' '}
       <span className="suggestion__meta">
-        <span className="suggestion__ratio">{formatRatio(suggestion.ratio)}</span>{' '}
-        <span>{directionLabel(suggestion)}</span>{' '}
-        {/* The separator keeps the computed accessible name readable ("#817272 4.58:1 …") while the
-            flex/grid layout keeps the visual spacing. */}
+        <span className="suggestion__ratio">{formatRatio(suggestion.ratio)}</span> <span>{direction}</span>{' '}
       </span>
-      <span className="visually-hidden">— use as the {role} colour</span>
+      <span className="visually-hidden">— {t('suggest.chipUseAs', { role: roleLabel })}</span>
     </button>
   );
 }
@@ -76,6 +77,7 @@ export function SuggestionsCard({
   onApplyForeground,
   onApplyBackground,
 }: SuggestionsCardProps) {
+  const { t } = useI18n();
   const foregroundSuggestions = useMemo(
     () => suggestForegroundColors(foreground, background, { target, limit: 4 }),
     [foreground, background, target],
@@ -88,16 +90,11 @@ export function SuggestionsCard({
   const ceiling = useMemo(() => maxAchievableRatio(background), [background]);
 
   return (
-    <Card
-      id="suggestions"
-      title="Accessible alternatives"
-      icon={<SparkleIcon />}
-      hint="Keeps the original hue where possible"
-    >
+    <Card id="suggestions" title={t('suggest.title')} icon={<SparkleIcon />} hint={t('suggest.hint')}>
       <div className="stack">
         <div className="inline" style={{ justifyContent: 'space-between' }}>
           <span className="small muted" id="target-label">
-            Target ratio
+            {t('suggest.target')}
           </span>
           <div className="segmented" role="group" aria-labelledby="target-label">
             {targetOptions.map((option) => (
@@ -117,22 +114,26 @@ export function SuggestionsCard({
           <div className="callout callout--fail">
             <AlertIcon />
             <div>
-              <strong>No colour can reach {target}:1 on this background.</strong> The best possible pair here is{' '}
-              {formatRatio(ceiling.ratio)} using {ceiling.color}. Pick a different background instead.
+              <strong>{t('suggest.unreachable', { target })}</strong>{' '}
+              {t('suggest.unreachableBest', {
+                ratio: formatRatio(ceiling.ratio),
+                colour: ceiling.color,
+              })}
             </div>
           </div>
         ) : null}
 
         <div>
           <h3 className="small" style={{ marginBottom: '0.45rem', fontWeight: 680 }}>
-            Adjust the text colour
+            {t('suggest.adjustText')}
           </h3>
           <div className="suggestion-grid">
             {foregroundSuggestions.map((suggestion) => (
               <SuggestChip
                 key={`fg-${suggestion.hex}`}
                 suggestion={suggestion}
-                role="text"
+                roleLabel={t('suggest.roleText')}
+                roleKey="text"
                 counterpart={background}
                 onApply={onApplyForeground}
               />
@@ -142,38 +143,35 @@ export function SuggestionsCard({
 
         <div>
           <h3 className="small" style={{ marginBottom: '0.45rem', fontWeight: 680 }}>
-            Or adjust the background
+            {t('suggest.adjustBackground')}
           </h3>
           <div className="suggestion-grid">
             {backgroundSuggestions.map((suggestion) => (
               <SuggestChip
                 key={`bg-${suggestion.hex}`}
                 suggestion={suggestion}
-                role="surface"
+                roleLabel={t('suggest.roleSurface')}
+                roleKey="surface"
                 counterpart={foreground}
                 onApply={onApplyBackground}
               />
             ))}
           </div>
           <p className="small muted" style={{ marginTop: '0.4rem' }}>
-            Selecting a suggestion updates the corresponding field. Nothing is applied automatically, so you can
-            compare before committing.
+            {t('suggest.note')}
           </p>
         </div>
 
         <div className="callout callout--info">
           <SparkleIcon />
-          <div>
-            Suggestions move lightness in 1% steps and keep hue and saturation. They are a starting point — check the
-            result in a real page, because rendering, transparency and font weight all change perceived contrast.
-          </div>
+          <div>{t('suggest.info')}</div>
         </div>
       </div>
     </Card>
   );
 }
 
-/** Small inline swatch preview used in the CVD card and palette rows. */
+/** Small inline swatch preview used in the palette rows. */
 export function Swatch({ color, label }: { color: RGBA; label: string }) {
   return (
     <span

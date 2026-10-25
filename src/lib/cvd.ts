@@ -14,50 +14,51 @@ import type { RGBA } from './color';
 import { hslToRgb, normalizeColor, rgbToHex, rgbToHsl } from './color';
 import { CVD_MATRIX_TABLE } from './cvd-matrices';
 import type { CvdMatrixRow } from './cvd-matrices';
+import type { TranslationKey } from '../i18n/translations';
 import { contrastRatio } from './wcag';
 
 export type CvdType = 'protan' | 'deutan' | 'tritan' | 'achromat';
 
 export interface CvdDefinition {
   readonly id: CvdType;
-  readonly name: string;
-  readonly shortName: string;
-  readonly prevalence: string;
-  readonly description: string;
+  /**
+   * Dictionary keys rather than English strings: the UI translates these at render time so the
+   * simulation cards follow the active language.
+   */
+  readonly nameKey: TranslationKey;
+  readonly shortNameKey: TranslationKey;
+  readonly prevalenceKey: TranslationKey;
+  readonly descriptionKey: TranslationKey;
 }
 
 export const CVD_DEFINITIONS: readonly CvdDefinition[] = [
   {
     id: 'protan',
-    name: 'Protanopia / protanomaly (red-blind, red-weak)',
-    shortName: 'Protan',
-    prevalence: '≈1% of men, 0.01% of women for protanopia',
-    description:
-      'Reduced or absent L-cone response. Reds darken dramatically and can collapse into green or brown; red-on-black text is the classic failure case.',
+    nameKey: 'cvd.protanName',
+    shortNameKey: 'cvd.protanShort',
+    prevalenceKey: 'cvd.protanPrevalence',
+    descriptionKey: 'cvd.protanDesc',
   },
   {
     id: 'deutan',
-    name: 'Deuteranopia / deuteranomaly (green-blind, green-weak)',
-    shortName: 'Deutan',
-    prevalence: '≈1% of men for deuteranopia, up to 5% of men for deuteranomaly',
-    description:
-      'Reduced or absent M-cone response, the most common CVD. Red and green hues become hard to tell apart, while blue and yellow stay distinguishable.',
+    nameKey: 'cvd.deutanName',
+    shortNameKey: 'cvd.deutanShort',
+    prevalenceKey: 'cvd.deutanPrevalence',
+    descriptionKey: 'cvd.deutanDesc',
   },
   {
     id: 'tritan',
-    name: 'Tritanopia / tritanomaly (blue-blind, blue-weak)',
-    shortName: 'Tritan',
-    prevalence: '≈0.01% of people, affects men and women equally',
-    description:
-      'Reduced or absent S-cone response. Blue and green collapse together, and yellow can look pink or grey.',
+    nameKey: 'cvd.tritanName',
+    shortNameKey: 'cvd.tritanShort',
+    prevalenceKey: 'cvd.tritanPrevalence',
+    descriptionKey: 'cvd.tritanDesc',
   },
   {
     id: 'achromat',
-    name: 'Achromatopsia (total colour blindness)',
-    shortName: 'Achromat',
-    prevalence: '≈0.003% of people',
-    description:
-      'No functioning cones for colour: the world is seen in shades of grey. Luminance contrast is the only signal that remains.',
+    nameKey: 'cvd.achromatName',
+    shortNameKey: 'cvd.achromatShort',
+    prevalenceKey: 'cvd.achromatPrevalence',
+    descriptionKey: 'cvd.achromatDesc',
   },
 ];
 
@@ -132,7 +133,8 @@ export function simulateCvd(color: RGBA, type: CvdType, severity = 1): RGBA {
 
 export interface CvdPairResult {
   readonly type: CvdType;
-  readonly label: string;
+  /** Dictionary key for the short label, so the UI can translate it. */
+  readonly labelKey: TranslationKey;
   readonly foreground: RGBA;
   readonly background: RGBA;
   readonly foregroundHex: string;
@@ -162,7 +164,7 @@ export function simulatePair(
     const ratio = contrastRatio(fg, bg);
     return {
       type,
-      label: definition?.shortName ?? type,
+      labelKey: definition?.shortNameKey ?? 'cvd.protanShort',
       foreground: fg,
       background: bg,
       foregroundHex: rgbToHex(fg).toUpperCase(),

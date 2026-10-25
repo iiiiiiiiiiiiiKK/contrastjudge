@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
 import type { ParseResult, RGBA } from '../lib/color';
 import { formatRgb, rgbToHex, rgbToHsl, trimNumber } from '../lib/color';
+import { useI18n } from '../i18n';
 import { AlertIcon, CopyIcon, PipetteIcon } from './Icons';
 
 export interface ColorFieldProps {
@@ -14,7 +15,7 @@ export interface ColorFieldProps {
   readonly idPrefix: string;
   readonly disabled?: boolean;
   /** Optional extra controls rendered after the hex input. */
-  readonly children?: React.ReactNode;
+  readonly children?: ReactNode;
 }
 
 interface EyeDropperResult {
@@ -39,6 +40,7 @@ function toColorInputValue(color: RGBA): string {
 
 export function ColorField(props: ColorFieldProps) {
   const { label, role, value, parsed, onChange, onCopy, idPrefix, disabled, children } = props;
+  const { t, tm } = useI18n();
   const inputId = `${idPrefix}-text`;
   const errorId = `${idPrefix}-error`;
   const helperId = `${idPrefix}-helper`;
@@ -66,9 +68,7 @@ export function ColorField(props: ColorFieldProps) {
     const Ctor = getEyeDropper();
     if (!Ctor) {
       setDropperState('unsupported');
-      setDropperMessage(
-        'Your browser does not expose the EyeDropper API. Use the swatch picker, type a value, or paste a colour from your design tool.',
-      );
+      setDropperMessage(t('colorField.dropperUnsupported'));
       return;
     }
     try {
@@ -87,7 +87,9 @@ export function ColorField(props: ColorFieldProps) {
       }
       setDropperState('error');
       setDropperMessage(
-        `Could not read a colour from the screen: ${error instanceof Error ? error.message : 'unknown error'}`,
+        t('colorField.dropperError', {
+          message: error instanceof Error ? error.message : String(error),
+        }),
       );
     }
   };
@@ -104,7 +106,7 @@ export function ColorField(props: ColorFieldProps) {
             value={swatchColor}
             onChange={handlePicker}
             disabled={disabled}
-            aria-label={`${label} colour picker`}
+            aria-label={t('colorField.pickerAria', { label })}
             aria-describedby={helperId}
           />
           <span
@@ -112,7 +114,7 @@ export function ColorField(props: ColorFieldProps) {
             style={{ background: valid ? formatRgb(parsed.color) : undefined }}
           />
           <span className="swatch-input__label" aria-hidden="true">
-            Pick
+            {t('colorField.pick')}
           </span>
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
@@ -124,7 +126,7 @@ export function ColorField(props: ColorFieldProps) {
         {onCopy ? (
           <button type="button" className="button button--sm button--quiet" onClick={onCopy}>
             <CopyIcon />
-            Copy
+            {t('common.copy')}
           </button>
         ) : null}
       </div>
@@ -144,7 +146,7 @@ export function ColorField(props: ColorFieldProps) {
             disabled={disabled}
             aria-invalid={!valid}
             aria-describedby={`${helperId}${valid ? '' : ` ${errorId}`}`}
-            placeholder="#1a1a1a, rgb(26 26 26), hsl(0 0% 10%)"
+            placeholder={t('colorField.placeholder')}
           />
         </div>
         <button
@@ -154,17 +156,17 @@ export function ColorField(props: ColorFieldProps) {
             void handleEyeDropper();
           }}
           disabled={disabled}
-          title="Pick a colour from anywhere on screen (requires browser support and your permission)"
+          title={t('colorField.eyedropperTitle')}
         >
           <PipetteIcon />
-          Eyedropper
+          {t('colorField.eyedropper')}
         </button>
       </div>
 
       {!valid ? (
         <p className="field-error" id={errorId}>
           <AlertIcon />
-          <span>{parsed.message}</span>
+          <span>{tm(parsed.message)}</span>
         </p>
       ) : null}
 
@@ -188,11 +190,13 @@ export function ColorField(props: ColorFieldProps) {
             <span>
               hsl({trimNumber(hsl.h, 1)} {trimNumber(hsl.s, 1)}% {trimNumber(hsl.l, 1)}%)
             </span>
-            {parsed.color.a < 1 ? <span>alpha {trimNumber(parsed.color.a, 2)}</span> : null}
-            <span>parsed as {parsed.format}</span>
+            {parsed.color.a < 1 ? (
+              <span>{t('colorField.alpha', { value: trimNumber(parsed.color.a, 2) })}</span>
+            ) : null}
+            <span>{t('colorField.parsedAs', { format: parsed.format })}</span>
           </>
         ) : (
-          <span>Hex (3/4/6/8 digits), rgb(), rgba(), hsl(), hsla() or a CSS colour name.</span>
+          <span>{t('colorField.hint')}</span>
         )}
       </p>
 

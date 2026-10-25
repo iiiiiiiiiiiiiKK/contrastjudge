@@ -3,6 +3,7 @@ import type { PaletteEntry } from '../types';
 import type { RGBA } from '../lib/color';
 import { toCssVariables, toJson } from '../lib/exports';
 import type { ExportColor } from '../lib/exports';
+import { useI18n } from '../i18n';
 import { EmptyState } from './Card';
 import { CopyIcon, DownloadIcon, LayersIcon } from './Icons';
 
@@ -18,6 +19,7 @@ interface ExportCardProps {
 type Target = 'palette' | 'pair';
 
 export function ExportCard({ palette, foreground, background, pageBackground, onCopy, onNotify }: ExportCardProps) {
+  const { t } = useI18n();
   const [target, setTarget] = useState<Target>(palette.length > 0 ? 'palette' : 'pair');
   const [cssFormat, setCssFormat] = useState<'hex' | 'rgb' | 'hsl'>('hex');
   const [prefix, setPrefix] = useState('--cj-');
@@ -60,29 +62,44 @@ export function ExportCard({ palette, foreground, background, pageBackground, on
 
   const disabled = colors.length === 0;
 
+  const download = (content: string, mime: string, filename: string) => {
+    if (disabled) {
+      onNotify(t('toast.nothingToExport'), 'error');
+      return;
+    }
+    const blobUrl = URL.createObjectURL(new Blob([content], { type: mime }));
+    const anchor = document.createElement('a');
+    anchor.href = blobUrl;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  };
+
   return (
     <div className="card">
       <div className="card__header">
         <h2 className="card__title">
           <LayersIcon />
-          Export
+          {t('export.title')}
         </h2>
-        <span className="card__hint">CSS custom properties &amp; JSON tokens</span>
+        <span className="card__hint">{t('export.hint')}</span>
       </div>
       <div className="card__body">
         {target === 'palette' && palette.length === 0 ? (
-          <EmptyState icon={<LayersIcon />} title="Nothing to export from the palette">
-            Save at least one colour in the Palette tab, or switch the source to “Current pair”.
+          <EmptyState icon={<LayersIcon />} title={t('export.emptyTitle')}>
+            {t('export.emptyBody')}
           </EmptyState>
         ) : (
           <div className="export-grid">
             <div className="inline" style={{ gap: '0.6rem' }}>
               <span className="small muted" id="export-source-label">
-                Source
+                {t('export.source')}
               </span>
               <div className="segmented" role="group" aria-labelledby="export-source-label">
                 <button type="button" aria-pressed={target === 'pair'} onClick={() => setTarget('pair')}>
-                  Current pair
+                  {t('export.currentPair')}
                 </button>
                 <button
                   type="button"
@@ -90,14 +107,14 @@ export function ExportCard({ palette, foreground, background, pageBackground, on
                   onClick={() => setTarget('palette')}
                   disabled={palette.length === 0}
                 >
-                  Palette ({palette.length})
+                  {t('export.paletteSource', { count: palette.length })}
                 </button>
               </div>
             </div>
 
             <div className="preview-controls" style={{ marginTop: 0 }}>
               <div className="field">
-                <label htmlFor="css-format">CSS value format</label>
+                <label htmlFor="css-format">{t('export.cssFormat')}</label>
                 <select
                   id="css-format"
                   value={cssFormat}
@@ -109,7 +126,7 @@ export function ExportCard({ palette, foreground, background, pageBackground, on
                 </select>
               </div>
               <div className="field">
-                <label htmlFor="css-prefix">Property prefix</label>
+                <label htmlFor="css-prefix">{t('export.prefix')}</label>
                 <input
                   id="css-prefix"
                   className="text-input"
@@ -120,21 +137,21 @@ export function ExportCard({ palette, foreground, background, pageBackground, on
                 />
               </div>
               <div className="field">
-                <span className="field__label">Options</span>
+                <span className="field__label">{t('export.options')}</span>
                 <label className="checkbox-chip" data-checked={includeComments} style={{ alignSelf: 'flex-start' }}>
                   <input
                     type="checkbox"
                     checked={includeComments}
                     onChange={(event) => setIncludeComments(event.target.checked)}
                   />
-                  Contrast comments
+                  {t('export.contrastComments')}
                 </label>
               </div>
             </div>
 
             <div className="field">
               <span className="field__label" id="css-output-label">
-                CSS custom properties
+                {t('export.cssOutput')}
               </span>
               <pre className="code-block" aria-labelledby="css-output-label" tabIndex={0}>
                 <code>{css}</code>
@@ -143,41 +160,30 @@ export function ExportCard({ palette, foreground, background, pageBackground, on
                 <button
                   type="button"
                   className="button button--sm"
-                  onClick={() => onCopy(css, 'CSS variables')}
+                  onClick={() => onCopy(css, t('toast.copiedLabel.css'))}
                   disabled={disabled}
                 >
                   <CopyIcon />
-                  Copy CSS
+                  {t('export.copyCss')}
                 </button>
                 <button
                   type="button"
                   className="button button--sm"
                   onClick={() => {
-                    if (disabled) {
-                      onNotify('There is nothing to export yet.', 'error');
-                      return;
-                    }
-                    const blobUrl = URL.createObjectURL(new Blob([css], { type: 'text/css;charset=utf-8' }));
-                    const anchor = document.createElement('a');
-                    anchor.href = blobUrl;
-                    anchor.download = 'contrastjudge-tokens.css';
-                    document.body.appendChild(anchor);
-                    anchor.click();
-                    anchor.remove();
-                    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                    onNotify('CSS file downloaded.');
+                    download(css, 'text/css;charset=utf-8', 'contrastjudge-tokens.css');
+                    if (!disabled) onNotify(t('toast.cssDownloaded'));
                   }}
                   disabled={disabled}
                 >
                   <DownloadIcon />
-                  Download .css
+                  {t('export.downloadCss')}
                 </button>
               </div>
             </div>
 
             <div className="field">
               <span className="field__label" id="json-output-label">
-                JSON design tokens (includes the full contrast matrix)
+                {t('export.jsonOutput')}
               </span>
               <pre className="code-block" aria-labelledby="json-output-label" tabIndex={0}>
                 <code>{json}</code>
@@ -186,42 +192,28 @@ export function ExportCard({ palette, foreground, background, pageBackground, on
                 <button
                   type="button"
                   className="button button--sm"
-                  onClick={() => onCopy(json, 'JSON tokens')}
+                  onClick={() => onCopy(json, t('toast.copiedLabel.json'))}
                   disabled={disabled}
                 >
                   <CopyIcon />
-                  Copy JSON
+                  {t('export.copyJson')}
                 </button>
                 <button
                   type="button"
                   className="button button--sm"
                   onClick={() => {
-                    if (disabled) {
-                      onNotify('There is nothing to export yet.', 'error');
-                      return;
-                    }
-                    const blobUrl = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-                    const anchor = document.createElement('a');
-                    anchor.href = blobUrl;
-                    anchor.download = 'contrastjudge-tokens.json';
-                    document.body.appendChild(anchor);
-                    anchor.click();
-                    anchor.remove();
-                    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                    onNotify('JSON file downloaded.');
+                    download(json, 'application/json', 'contrastjudge-tokens.json');
+                    if (!disabled) onNotify(t('toast.jsonDownloaded'));
                   }}
                   disabled={disabled}
                 >
                   <DownloadIcon />
-                  Download .json
+                  {t('export.downloadJson')}
                 </button>
               </div>
             </div>
 
-            <p className="small muted">
-              Every exported ratio is recalculated from the colour values at export time using the same WCAG formula
-              shown in the result panel. Comments reference the current page background colour.
-            </p>
+            <p className="small muted">{t('export.note')}</p>
           </div>
         )}
       </div>

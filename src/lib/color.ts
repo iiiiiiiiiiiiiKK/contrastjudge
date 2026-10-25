@@ -7,8 +7,13 @@
  * Parsing is deliberately strict. An invalid input returns a typed error instead of being
  * silently coerced into some "close enough" colour, because a contrast tool that quietly
  * changes your colours is worse than one that refuses to answer.
+ *
+ * Error messages are returned as translatable `Message` objects (a dictionary key plus params)
+ * rather than baked-in English, so the UI can render them in the active language.
  */
 import { NAMED_COLORS } from './named-colors';
+import { msg } from '../i18n/messages';
+import type { Message } from '../i18n/messages';
 
 /** sRGB colour with an alpha channel. r/g/b are integers 0-255, a is 0-1. */
 export interface RGBA {
@@ -50,8 +55,8 @@ export interface ParseSuccess {
 export interface ParseFailure {
   readonly ok: false;
   readonly code: ParseErrorCode;
-  /** Human readable explanation, safe to show in the UI. */
-  readonly message: string;
+  /** Translatable explanation, safe to show in the UI. */
+  readonly message: Message;
 }
 
 export type ColorFormat = 'hex' | 'rgb' | 'hsl' | 'named' | 'keyword';
@@ -59,8 +64,12 @@ export type ParseResult = ParseSuccess | ParseFailure;
 
 const HEX_DIGITS = /^[0-9a-f]+$/i;
 
-function fail(code: ParseErrorCode, message: string): ParseFailure {
-  return { ok: false, code, message };
+function fail(
+  code: ParseErrorCode,
+  key: Message['key'],
+  params?: Readonly<Record<string, string | number>>,
+): ParseFailure {
+  return { ok: false, code, message: msg(key, params) };
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -141,7 +150,7 @@ function splitComponents(body: string): { parts: string[]; separator: ',' | ' ' 
 function parseHex(input: string): ParseResult {
   const digits = input.slice(1);
   if (!HEX_DIGITS.test(digits)) {
-    return fail('bad-hex', `"${input}" is not valid hexadecimal — only 0-9 and a-f are allowed.`);
+    return fail('bad-hex', 'parse.badHex', { value: input });
   }
   let r: number;
   let g: number;
@@ -170,7 +179,7 @@ function parseHex(input: string): ParseResult {
       break;
     }
     default:
-      return fail('bad-hex', `"${input}" has ${digits.length} digits; hex colours must have 3, 4, 6 or 8 digits.`);
+      return fail('bad-hex', 'parse.badHexLength', { value: input, count: digits.length });
   }
   return {
     ok: true,
@@ -183,7 +192,7 @@ function parseHex(input: string): ParseResult {
 function parseRgbFunction(name: string, body: string): ParseResult {
   const split = splitComponents(body);
   if (!split) {
-    return fail('bad-number', `"${name}(${body})" needs three values (red, green, blue) plus an optional alpha.`);
+    return fail('bad-number', 'parse.badNumberArity', { call: `${name}(${body})` });
   }
   const { parts } = split;
   const channels: number[] = [];
@@ -198,17 +207,17 @@ function parseRgbFunction(name: string, body: string): ParseResult {
     }
     if (token.endsWith('%')) {
       const value = parseNumeric(token.slice(0, -1));
-      if (value === null) return fail('bad-number', `"${token}" is not a valid percentage.`);
+      if (value === null) return fail('bad-number', 'parse.badPercent', { value: token });
       if (value < 0 || value > 100) {
-        return fail('out-of-range', `"${token}" is outside the allowed range 0%–100%.`);
+        return fail('out-of-range', 'parse.outOfRangePercent', { value: token });
       }
       channels.push((value / 100) * 255);
       usedPercent = true;
     } else {
       const value = parseNumeric(token);
-      if (value === null) return fail('bad-number', `"${token}" is not a valid number.`);
+      if (value === null) return fail('bad-number', 'parse.badNumber', { value: token });
       if (value < 0 || value > 255) {
-        return fail('out-of-range', `"${token}" is outside the allowed range 0–255.`);
+        return fail('out-of-range', 'parse.outOfRangeChannel', { value: token });
       }
       channels.push(value);
       usedNumber = true;
@@ -216,12 +225,12 @@ function parseRgbFunction(name: string, body: string): ParseResult {
   }
 
   if (usedPercent && usedNumber) {
-    return fail('mixed-syntax', 'Do not mix percentages and plain numbers in one rgb() value.');
+    return fail('mixed-syntax', 'parse.mixedSyntax');
   }
 
   const alpha = parseAlpha(parts[3]);
   if (alpha === null) {
-    return fail('bad-alpha', `"${(parts[3] ?? '').trim()}" is not a valid alpha (expected 0–1 or 0%–100%).`);
+    return fail('bad-alpha', 'parse.badAlpha', { value: (parts[3] ?? '').trim() });
   }
 
   return {
@@ -262,13 +271,13 @@ function parseAngle(raw: string): number | null {
 function parseHslFunction(name: string, body: string): ParseResult {
   const split = splitComponents(body);
   if (!split) {
-    return fail('bad-number', `"${name}(${body})" needs hue, saturation and lightness plus an optional alpha.`);
+    return fail('bad-number', 'parse.badNumberArityHsl', { call: `${name}(${body})` });
   }
   const { parts } = split;
 
   const hue = parseAngle(parts[0] ?? '');
   if (hue === null) {
-    return fail('bad-angle', `"${(parts[0] ?? '').trim()}" is not a valid hue angle.`);
+    return fail('bad-angle', 'parse.badAngle', { value: (parts[0] ?? '').trim() });
   }
 
   const readPercent = (token: string, legacy: boolean): number | null => {
@@ -286,16 +295,16 @@ function parseHslFunction(name: string, body: string): ParseResult {
 
   const saturation = readPercent(parts[1] ?? '', split.separator === ',');
   if (saturation === null) {
-    return fail('out-of-range', `Saturation "${(parts[1] ?? '').trim()}" must be a percentage between 0% and 100%.`);
+    return fail('out-of-range', 'parse.outOfRangeSaturation', { value: (parts[1] ?? '').trim() });
   }
   const lightness = readPercent(parts[2] ?? '', split.separator === ',');
   if (lightness === null) {
-    return fail('out-of-range', `Lightness "${(parts[2] ?? '').trim()}" must be a percentage between 0% and 100%.`);
+    return fail('out-of-range', 'parse.outOfRangeLightness', { value: (parts[2] ?? '').trim() });
   }
 
   const alpha = parseAlpha(parts[3]);
   if (alpha === null) {
-    return fail('bad-alpha', `"${(parts[3] ?? '').trim()}" is not a valid alpha (expected 0–1 or 0%–100%).`);
+    return fail('bad-alpha', 'parse.badAlpha', { value: (parts[3] ?? '').trim() });
   }
 
   const { r, g, b } = hslToRgbChannels({ h: hue, s: saturation, l: lightness });
@@ -314,7 +323,7 @@ function parseHslFunction(name: string, body: string): ParseResult {
  */
 export function parseColor(input: string): ParseResult {
   const raw = input.trim();
-  if (raw === '') return fail('empty', 'Enter a colour value.');
+  if (raw === '') return fail('empty', 'parse.empty');
 
   if (raw.startsWith('#')) return parseHex(raw);
 
@@ -324,14 +333,11 @@ export function parseColor(input: string): ParseResult {
     const body = fnMatch[2] ?? '';
     if (name === 'rgb' || name === 'rgba') return parseRgbFunction(name, body);
     if (name === 'hsl' || name === 'hsla') return parseHslFunction(name, body);
-    return fail(
-      'unknown-format',
-      `"${name}()" is not supported. Use hex, rgb(), rgba(), hsl(), hsla() or a CSS colour name.`,
-    );
+    return fail('unknown-format', 'parse.unknownFormatFn', { name });
   }
 
   if (raw.includes('(') || raw.includes(')')) {
-    return fail('unbalanced', `"${raw}" does not look like a complete colour function call.`);
+    return fail('unbalanced', 'parse.unbalanced', { value: raw });
   }
 
   const lower = raw.toLowerCase();
@@ -346,16 +352,16 @@ export function parseColor(input: string): ParseResult {
     }
   }
 
-  return fail(
-    'unknown-format',
-    `"${raw}" is not a colour this tool understands. Try #1a1a1a, rgb(26 26 26), hsl(0 0% 10%) or "rebeccapurple".`,
-  );
+  return fail('unknown-format', 'parse.unknownFormat', { value: raw });
 }
 
-/** Convenience wrapper for tests and callers that can treat failure as a programming error. */
+/**
+ * Convenience wrapper for tests and callers that can treat failure as a programming error.
+ * The thrown message is English on purpose: it is a developer-facing invariant, not UI copy.
+ */
 export function parseColorOrThrow(input: string): RGBA {
   const parsed = parseColor(input);
-  if (!parsed.ok) throw new Error(parsed.message);
+  if (!parsed.ok) throw new Error(`Invalid colour "${input}" (${parsed.code})`);
   return parsed.color;
 }
 

@@ -34,7 +34,10 @@ async function audit(page, label) {
   const browser = await chromium.launch();
   const reports = [];
 
-  const desktop = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+  // Pin the locale: the app follows the browser language, and this machine's default is zh-CN.
+  // The English half of the audit needs a deterministic starting language, and the Chinese half is
+  // entered through the in-app switch (which also covers the persisted-preference code path).
+  const desktop = await browser.newContext({ viewport: { width: 1440, height: 960 }, locale: 'en-US' });
   const page = await desktop.newPage();
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page.getByTestId('contrast-ratio').waitFor();
@@ -62,11 +65,37 @@ async function audit(page, label) {
   reports.push(await audit(page, 'workspace (invalid input, dark)'));
 
   // A phone viewport, because reflow and target size only show up there.
-  const phone = await browser.newContext({ ...devices['iPhone 14'] });
+  const phone = await browser.newContext({ ...devices['iPhone 14'], locale: 'en-US' });
   const mobile = await phone.newPage();
   await mobile.goto(BASE, { waitUntil: 'domcontentloaded' });
   await mobile.getByTestId('contrast-ratio').waitFor();
   reports.push(await audit(mobile, 'workspace (iPhone 14)'));
+
+  // The Chinese interface is a separate layout risk: longer/shorter labels, different wrapping.
+  await page.getByLabel('Foreground (text)', { exact: true }).fill('#5b6478');
+  await page.getByRole('button', { name: /Switch language to 简体中文/i }).click();
+  await page.waitForTimeout(300);
+  reports.push(await audit(page, 'workspace (zh)'));
+  for (const [tab, name] of [
+    ['调色板', 'palette (zh)'],
+    ['批量检查', 'batch (zh)'],
+    ['计算方法', 'method (zh)'],
+  ]) {
+    await page.getByRole('tab', { name: new RegExp(tab) }).click();
+    await page.waitForTimeout(250);
+    reports.push(await audit(page, name));
+  }
+  await page.getByRole('tab', { name: /工作区/ }).click();
+  await page.waitForTimeout(250);
+  reports.push(await audit(page, 'workspace (zh, dark)'));
+
+  const zhPhone = await browser.newContext({ ...devices['iPhone 14'], locale: 'en-US' });
+  const zhMobile = await zhPhone.newPage();
+  await zhMobile.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await zhMobile.getByTestId('contrast-ratio').waitFor();
+  await zhMobile.getByRole('button', { name: /Switch language to 简体中文/i }).click();
+  await zhMobile.waitForTimeout(300);
+  reports.push(await audit(zhMobile, 'workspace (zh, iPhone 14)'));
 
   await browser.close();
 

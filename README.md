@@ -4,11 +4,14 @@
 
 # ContrastJudge
 
+**English** · [简体中文](README.zh-CN.md)
+
 **Judge colour contrast against WCAG 2.2 — without sending anything anywhere.**
 
 Type any CSS colour, get the exact ratio, see which success criteria it meets for body text, large
 text and UI components, simulate colour-vision deficiency, generate accessible alternatives, and
-export the result as CSS variables or JSON tokens.
+export the result as CSS variables or JSON tokens. The interface itself switches between
+English and Simplified Chinese from the header — no reload, no re-entry of any data.
 
 [**Live app**](https://iiiiiiiiiiiiikk.github.io/contrastjudge/) ·
 [Method notes](https://iiiiiiiiiiiiikk.github.io/contrastjudge/#learn) ·
@@ -60,8 +63,14 @@ ContrastJudge is built around three commitments:
 | **Export**                   | CSS custom properties (hex/rgb/hsl, optional contrast comments) and JSON design tokens with a full contrast matrix                                         |
 | **Batch audit**              | Paste one pair per line, get a table plus Markdown and CSV reports you can attach to a review                                                              |
 | **History**                  | The last 12 checks, restorable with one click, stored locally                                                                                              |
+| **English / 简体中文**       | One-click language switch in the header; every string — including error messages, the batch report and the method notes — is translated                    |
 | **Dark mode & responsive**   | Light/dark themes, 320px → wide desktop, verified in real browsers at iPhone and Pixel viewports                                                           |
 | **Keyboard & screen reader** | Skip link, roving-tabindex tab list, labelled inputs, live-region announcements, visible focus everywhere                                                  |
+
+<div align="center">
+  <img src="docs/screenshots/workspace-zh.webp" alt="ContrastJudge 中文界面：顶部有语言切换与作者 X 链接，左侧颜色输入，右侧对比度结果与逐条标准判定" width="100%" />
+  <sub>中文界面（点顶部的「中文 / EN」按钮切换，选择会被记住）。</sub>
+</div>
 
 <div align="center">
   <img src="docs/screenshots/workspace-iphone-14.webp" alt="ContrastJudge on an iPhone 14 viewport: the header keeps the author's X link visible, the workspace stacks into a single column, and the contrast result appears above the fold" width="320" />
@@ -209,22 +218,25 @@ See [`.env.example`](.env.example).
 ## Testing
 
 ```text
-Unit + component (Vitest, jsdom)     111 tests, 7 files
-End-to-end (Playwright, Chromium)     74 passed / 1 skipped, 3 viewport profiles
+Unit + component (Vitest, jsdom)     132 tests, 9 files
+End-to-end (Playwright, Chromium)     101 passed / 4 skipped, 3 viewport profiles
 ```
 
 Coverage by file:
 
-| File                    | What it proves                                                                                                                                                                                 |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/color.test.ts`   | Every accepted syntax parses to the right channels; 10 invalid forms are rejected with typed errors; RGB↔HSL round-trips over 4,096 sample colours                                             |
-| `tests/wcag.test.ts`    | Transfer function, luminance weights, 21:1 and 1:1 extremes, 990 independent reference pairs, AA/AAA boundary behaviour, large-text classification, alpha flattening                           |
-| `tests/suggest.test.ts` | Suggestions always reach the target, keep hue within 3°, are deterministic, and return nothing when a target is unreachable                                                                    |
-| `tests/cvd.test.ts`     | Machado matrices reproduce published values for saturated red and blue, interpolation is monotonic, alpha survives, grey is unaffected                                                         |
-| `tests/exports.test.ts` | CSS variable naming (including `ß → ss` folding), duplicate handling, contrast comments, JSON structure, Markdown/CSV escaping                                                                 |
-| `tests/batch.test.ts`   | All five documented line formats, comment skipping, per-line error reporting with line numbers                                                                                                 |
-| `tests/app.test.tsx`    | Invalid input shows an error and never a guessed ratio; swap is symmetric; AA/AAA switching; keyboard tab navigation; theme persistence; copy failure surfaces an error                        |
-| `e2e/app.spec.ts`       | The same numbers reach the real UI in a real browser; downloads work; no horizontal overflow at any viewport; workspace stacks on a phone; tap targets; focus order; live-region announcements |
+| File                             | What it proves                                                                                                                                                                                 |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/color.test.ts`            | Every accepted syntax parses to the right channels; 10 invalid forms are rejected with typed errors; RGB↔HSL round-trips over 4,096 sample colours                                             |
+| `tests/wcag.test.ts`             | Transfer function, luminance weights, 21:1 and 1:1 extremes, 990 independent reference pairs, AA/AAA boundary behaviour, large-text classification, alpha flattening                           |
+| `tests/suggest.test.ts`          | Suggestions always reach the target, keep hue within 3°, are deterministic, and return nothing when a target is unreachable                                                                    |
+| `tests/cvd.test.ts`              | Machado matrices reproduce published values for saturated red and blue, interpolation is monotonic, alpha survives, grey is unaffected                                                         |
+| `tests/exports.test.ts`          | CSS variable naming (including `ß → ss` folding), duplicate handling, contrast comments, JSON structure, Markdown/CSV escaping                                                                 |
+| `tests/batch.test.ts`            | All five documented line formats, comment skipping, per-line error reporting with line numbers                                                                                                 |
+| `tests/app.test.tsx`             | Invalid input shows an error and never a guessed ratio; swap is symmetric; AA/AAA switching; keyboard tab navigation; theme persistence; copy failure surfaces an error                        |
+| `tests/language-switch.test.tsx` | Switching to Chinese flips every tab, label and error message; the ratio is unchanged; the choice survives a remount; a `zh`-preferring browser starts in Chinese                              |
+| `tests/i18n.test.ts`             | Both dictionaries share one key set and one placeholder set; no Chinese value is left silently in English; nested messages resolve per locale; no rendered string contains `undefined`         |
+| `e2e/app.spec.ts`                | The same numbers reach the real UI in a real browser; downloads work; no horizontal overflow at any viewport; workspace stacks on a phone; tap targets; focus order; live-region announcements |
+| `e2e/language.spec.ts`           | The header switch is keyboard reachable and flips the whole UI; the downloaded Markdown report is Chinese; the choice survives a reload; the phone header has no overflow in either language   |
 
 Run everything:
 
@@ -251,7 +263,7 @@ contain the expected content, that a `.css` download starts, that the batch tabl
 mode survives a reload, that there is no horizontal overflow at 390px, that the workspace collapses to
 one column on a phone, and that the page logs zero console errors.
 
-Last run: **25/25 checks passed** against the production deployment.
+Last run: **32/32 checks passed** against the production deployment, in English and Chinese.
 
 ## Deployment
 
@@ -336,18 +348,20 @@ The tool must meet the bar it measures. Verified in the E2E suite and by hand:
 
 ### Automated audit
 
-`npm run audit:a11y` runs **axe-core** (WCAG 2.0/2.1/2.2 A + AA and best-practice rules) against seven
+`npm run audit:a11y` runs **axe-core** (WCAG 2.0/2.1/2.2 A + AA and best-practice rules) against thirteen
 page states of a running deployment: the workspace in light mode, all four tabs, dark mode, the
-invalid-input error state, and an iPhone 14 viewport.
+invalid-input error state, an iPhone 14 viewport — and the same set again in Chinese, including a
+Chinese phone viewport.
 
 ```bash
 LIVE_URL=https://iiiiiiiiiiiiikk.github.io/contrastjudge/ npm run audit:a11y
 ```
 
-Current result: **7/7 page states clean, 0 violations.** Two real issues were found and fixed while
-building this: the header brand link and the suggestion chips had `aria-label`s that did not match
-their visible text (2.5.3), and the batch table wrapper was a scroll container without keyboard
-access.
+Current result: **13/13 page states clean, 0 violations**, in both languages. Three real issues were
+found and fixed while building this: the header brand link and the suggestion chips had `aria-label`s
+that did not match their visible text (2.5.3), the batch table wrapper was a scroll container without
+keyboard access, and the new language button's accessible name did not contain its visible label
+(2.5.3 again).
 
 Automated checks are a floor, not a ceiling — axe catches a minority of genuine barriers. If you hit
 one with a screen reader or a keyboard, please

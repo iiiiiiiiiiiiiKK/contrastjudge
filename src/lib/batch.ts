@@ -16,11 +16,16 @@ import { normalizeColor, parseColor, rgbToHex } from './color';
 import { contrastRatio, evaluateThresholdAgainst, NON_TEXT_THRESHOLD, TEXT_THRESHOLDS } from './wcag';
 import type { ThresholdResult } from './wcag';
 import type { BatchRow, BatchRowResult } from './exports';
+import { msg } from '../i18n/messages';
+import type { Message } from '../i18n/messages';
+import { createTranslator } from '../i18n/format';
+import type { Translator } from '../i18n/format';
 
 export interface BatchParseIssue {
   readonly line: number;
   readonly text: string;
-  readonly message: string;
+  /** Translatable explanation of why the line was skipped. */
+  readonly message: Message;
 }
 
 export interface BatchParseResult {
@@ -96,25 +101,25 @@ export function parseBatch(input: string, defaults: { fontSizePx?: number; bold?
       issues.push({
         line: index + 1,
         text: line,
-        message:
-          'Could not find two colours. Use "#111111 on #ffffff", "#111111, #ffffff, Label", or "#111111 #ffffff".',
+        message: msg('batch.issueNoPair'),
       });
       return;
     }
 
     const fg = parseColor(split.fgToken);
     if (!fg.ok) {
-      issues.push({ line: index + 1, text: line, message: `Foreground: ${fg.message}` });
+      issues.push({ line: index + 1, text: line, message: msg('batch.issueForeground', { message: fg.message }) });
       return;
     }
     const bg = parseColor(split.bgToken);
     if (!bg.ok) {
-      issues.push({ line: index + 1, text: line, message: `Background: ${bg.message}` });
+      issues.push({ line: index + 1, text: line, message: msg('batch.issueBackground', { message: bg.message }) });
       return;
     }
 
     rows.push({
-      label: split.label === '' ? `Line ${index + 1}` : split.label,
+      // Unnamed rows are labelled "Line n"; the UI translates that suffix when it renders.
+      label: split.label === '' ? `#${index + 1}` : split.label,
       foreground: fg.color,
       background: bg.color,
       fontSizePx,
@@ -147,7 +152,7 @@ export function evaluateBatch(rows: readonly BatchRow[]): BatchRowResult[] {
       passesAaNormal: passes('aa-normal'),
       passesAaaNormal: passes('aaa-normal'),
       passesNonText: passes('aa-non-text'),
-      worstFailure: failing.length === 0 ? null : (failing[0]?.summary ?? null),
+      worstFailure: failing.length === 0 ? null : (failing[0]?.explanation ?? null),
     };
   });
 }
@@ -174,11 +179,21 @@ export function summarizeBatch(results: readonly BatchRowResult[]): BatchSummary
   };
 }
 
-/** Sample palette-oriented batch content shown in the empty state. */
-export const BATCH_EXAMPLE = `#0f172a on #ffffff, Body text on white
-#94a3b8 on #ffffff, Muted caption (2.56:1 — fails)
-#ffffff on #2563eb, Primary button label
-#f8fafc on #0f172a, Dark mode body text`;
+/**
+ * Sample batch content. The labels are translated, so the example reads naturally in either
+ * language while the colour pairs (and therefore the ratios) stay byte-identical.
+ */
+export function buildBatchExample(t: Translator): string {
+  return [
+    `#0f172a on #ffffff, ${t('batch.exampleLabels.body')}`,
+    `#94a3b8 on #ffffff, ${t('batch.exampleLabels.muted')}`,
+    `#ffffff on #2563eb, ${t('batch.exampleLabels.button')}`,
+    `#f8fafc on #0f172a, ${t('batch.exampleLabels.dark')}`,
+  ].join('\n');
+}
+
+/** English example, kept for tests and non-UI callers. */
+export const BATCH_EXAMPLE = buildBatchExample(createTranslator('en'));
 
 /** Extracts every distinct colour used in a batch input, for the palette exporter. */
 export function extractBatchColors(rows: readonly BatchRow[]): RGBA[] {

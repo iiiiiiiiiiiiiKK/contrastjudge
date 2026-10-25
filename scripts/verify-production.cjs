@@ -19,7 +19,7 @@ async function setPair(page, fg, bg) {
   const browser = await chromium.launch();
 
   // ---- Desktop ----
-  const desktop = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+  const desktop = await browser.newContext({ viewport: { width: 1440, height: 960 }, locale: 'en-US' });
   const page = await desktop.newPage();
   const consoleErrors = [];
   page.on('console', (message) => {
@@ -108,7 +108,7 @@ async function setPair(page, fg, bg) {
   record('no console errors on desktop', consoleErrors.length === 0, consoleErrors.slice(0, 2).join(' | '));
 
   // ---- iPhone viewport ----
-  const phone = await browser.newContext({ ...devices['iPhone 14'], browserName: undefined });
+  const phone = await browser.newContext({ ...devices['iPhone 14'], browserName: undefined, locale: 'en-US' });
   const mobile = await phone.newPage();
   const mobileErrors = [];
   mobile.on('pageerror', (error) => mobileErrors.push(error.message));
@@ -143,6 +143,50 @@ async function setPair(page, fg, bg) {
     await mobile.getByTestId('contrast-ratio').textContent(),
   );
   record('iPhone: no page errors', mobileErrors.length === 0, mobileErrors.slice(0, 2).join(' | '));
+
+  // ---- Chinese UI: in-app switch ----
+  await page.getByRole('tab', { name: /Workspace/i }).click();
+  await page.getByRole('button', { name: /Switch language to 简体中文/i }).click();
+  record('language switch applies Chinese', (await page.locator('html').getAttribute('lang')) === 'zh-CN');
+  record(
+    'Chinese heading rendered',
+    ((await page.locator('h1').textContent()) ?? '').includes('按 WCAG 2.2 判定色彩对比度'),
+  );
+  await page.getByLabel('前景色（文字）', { exact: true }).fill('#767676');
+  record(
+    'Chinese UI still computes 4.54:1',
+    (await page.getByTestId('contrast-ratio').textContent()) === '4.54:1',
+    await page.getByTestId('contrast-ratio').textContent(),
+  );
+  record('Chinese verdict is translated', (await page.locator('.verdict-badge').textContent()).includes('通过'));
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  record('Chinese survives a reload', (await page.locator('html').getAttribute('lang')) === 'zh-CN');
+  record('no console errors in Chinese', consoleErrors.length === 0, consoleErrors.slice(0, 2).join(' | '));
+
+  // ---- Chinese UI: automatic detection from the browser language ----
+  const zhContext = await browser.newContext({ viewport: { width: 1440, height: 960 }, locale: 'zh-CN' });
+  const zhPage = await zhContext.newPage();
+  await zhPage.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await zhPage.getByTestId('contrast-ratio').waitFor();
+  record(
+    'zh-CN browser starts in Chinese',
+    (await zhPage.locator('html').getAttribute('lang')) === 'zh-CN',
+    await zhPage.locator('html').getAttribute('lang'),
+  );
+  const zhMobileContext = await browser.newContext({ ...devices['iPhone 14'], locale: 'zh-CN' });
+  const zhMobile = await zhMobileContext.newPage();
+  await zhMobile.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await zhMobile.getByTestId('contrast-ratio').waitFor();
+  const zhOverflow = await zhMobile.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  record(
+    'iPhone + Chinese: no horizontal overflow',
+    zhOverflow.scrollWidth <= zhOverflow.clientWidth + 1,
+    `${zhOverflow.scrollWidth} vs ${zhOverflow.clientWidth}`,
+  );
 
   await browser.close();
 

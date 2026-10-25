@@ -15,9 +15,11 @@ import { ToastProvider } from './hooks/useToast';
 import { useToast } from './hooks/toast-context';
 import { useTheme } from './hooks/useTheme';
 import { useJudge } from './hooks/useJudge';
+import { I18nProvider, useI18n } from './i18n';
+import type { TranslationKey } from './i18n';
 import type { TabId } from './types';
 import type { RGBA } from './lib/color';
-import { rgbToHex, normalizeColor } from './lib/color';
+import { normalizeColor, rgbToHex } from './lib/color';
 import { copyText } from './lib/exports';
 import { resolvePair } from './lib/wcag';
 import {
@@ -31,11 +33,11 @@ import {
   TrashIcon,
 } from './components/Icons';
 
-const TABS: readonly { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'workspace', label: 'Workspace', icon: <SwapIcon /> },
-  { id: 'palette', label: 'Palette', icon: <PaletteIcon /> },
-  { id: 'batch', label: 'Batch', icon: <ListIcon /> },
-  { id: 'learn', label: 'Method', icon: <BookIcon /> },
+const TABS: readonly { id: TabId; labelKey: TranslationKey; icon: React.ReactNode }[] = [
+  { id: 'workspace', labelKey: 'tabs.workspace', icon: <SwapIcon /> },
+  { id: 'palette', labelKey: 'tabs.palette', icon: <PaletteIcon /> },
+  { id: 'batch', labelKey: 'tabs.batch', icon: <ListIcon /> },
+  { id: 'learn', labelKey: 'tabs.method', icon: <BookIcon /> },
 ];
 
 function toHexValue(color: RGBA): string {
@@ -46,6 +48,7 @@ function AppShell() {
   const { theme, toggle } = useTheme();
   const judge = useJudge();
   const { notify } = useToast();
+  const { t } = useI18n();
   const {
     state,
     foreground,
@@ -61,20 +64,20 @@ function AppShell() {
     async (text: string, label: string) => {
       const result = await copyText(text);
       if (result.ok) {
-        notify(`Copied ${label}.`);
+        notify(t('toast.copied', { label }));
       } else {
-        notify(result.message, 'error');
+        notify(t('toast.copyFailed'), 'error');
       }
     },
-    [notify],
+    [notify, t],
   );
 
   // A polite live region announces the verdict; it is derived, not stored, so it cannot lag behind.
   const announcement = report
-    ? `Contrast ratio ${report.displayRatio}. ${
-        report.bestLevel === 'Fail AA' ? 'Fails AA for normal text.' : `Meets ${report.bestLevel}.`
-      }`
-    : 'Waiting for valid colours.';
+    ? report.bestLevel === 'Fail AA'
+      ? t('result.liveAnnounceFails', { ratio: report.displayRatio })
+      : t('result.liveAnnounceMeets', { ratio: report.displayRatio, level: report.bestLevel })
+    : t('result.liveWaiting');
 
   const effective = useMemo(() => {
     if (!foregroundColor || !backgroundColor) return null;
@@ -82,7 +85,6 @@ function AppShell() {
   }, [foregroundColor, backgroundColor, pageBackgroundColor]);
 
   const ratioText = report?.displayRatio ?? '—';
-
   const activeTabIndex = TABS.findIndex((tab) => tab.id === state.activeTab);
 
   const onTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -97,8 +99,7 @@ function AppShell() {
     const next = TABS[nextIndex];
     if (!next) return;
     judge.setActiveTab(next.id);
-    const button = document.getElementById(`tab-${next.id}`);
-    button?.focus();
+    document.getElementById(`tab-${next.id}`)?.focus();
   };
 
   return (
@@ -109,22 +110,18 @@ function AppShell() {
       <main className="app__main" id="main-content" tabIndex={-1}>
         <div className="hero">
           <div className="hero__copy">
-            <h1>Judge colour contrast against WCAG 2.2 — without sending anything anywhere.</h1>
-            <p>
-              Type any CSS colour, get the exact ratio, see which success criteria it meets for body text, large text
-              and UI components, simulate colour-vision deficiency, and export accessible alternatives. Every
-              calculation runs locally in this tab.
-            </p>
+            <h1>{t('hero.title')}</h1>
+            <p>{t('hero.subtitle')}</p>
             <div className="hero__badges">
-              <span className="pill pill--accent">WCAG 2.2 AA &amp; AAA</span>
-              <span className="pill">SC 1.4.3 路 1.4.6 路 1.4.11</span>
-              <span className="pill">100% local 路 no uploads</span>
-              <span className="pill">Open source 路 MIT</span>
+              <span className="pill pill--accent">{t('hero.badgeStandard')}</span>
+              <span className="pill">{t('hero.badgeCriteria')}</span>
+              <span className="pill">{t('hero.badgeLocal')}</span>
+              <span className="pill">{t('hero.badgeOpenSource')}</span>
             </div>
           </div>
         </div>
 
-        <div className="tabs" role="tablist" aria-label="ContrastJudge sections" onKeyDown={onTabKeyDown}>
+        <div className="tabs" role="tablist" aria-label={t('tabs.label')} onKeyDown={onTabKeyDown}>
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -138,7 +135,7 @@ function AppShell() {
               onClick={() => judge.setActiveTab(tab.id)}
             >
               {tab.icon}
-              {tab.label}
+              {t(tab.labelKey)}
               {tab.id === 'palette' && state.palette.length > 0 ? (
                 <span className="tab__count">{state.palette.length}</span>
               ) : null}
@@ -153,20 +150,22 @@ function AppShell() {
                 <section className="card" aria-labelledby="colours-heading">
                   <div className="card__header">
                     <h2 className="card__title" id="colours-heading">
-                      Colours under test
+                      {t('colours.title')}
                     </h2>
-                    <span className="card__hint">Foreground on background</span>
+                    <span className="card__hint">{t('colours.hint')}</span>
                   </div>
                   <div className="card__body stack">
                     <ColorField
                       idPrefix="fg"
-                      label="Foreground (text)"
-                      role="The colour of the text or icon being judged"
+                      label={t('colours.fgLabel')}
+                      role={t('colours.fgRole')}
                       value={state.foregroundInput}
                       parsed={foreground}
                       onChange={judge.setForegroundInput}
                       onCopy={
-                        foreground.ok ? () => void handleCopy(toHexValue(foreground.color), 'foreground') : undefined
+                        foreground.ok
+                          ? () => void handleCopy(toHexValue(foreground.color), t('toast.copiedLabel.foreground'))
+                          : undefined
                       }
                     />
 
@@ -175,39 +174,41 @@ function AppShell() {
                           wording would break WCAG 2.5.3 (Label in Name). */}
                       <button type="button" className="button" onClick={judge.swap}>
                         <SwapIcon />
-                        Swap colours
+                        {t('colours.swap')}
                       </button>
                       <button type="button" className="button" onClick={judge.randomize}>
                         <DiceIcon />
-                        Random pair
+                        {t('colours.random')}
                       </button>
                       <button type="button" className="button button--quiet" onClick={judge.reset}>
                         <TrashIcon />
-                        Reset
+                        {t('colours.reset')}
                       </button>
                     </div>
 
                     <ColorField
                       idPrefix="bg"
-                      label="Background (surface)"
-                      role="What the text sits on — usually a card or button fill"
+                      label={t('colours.bgLabel')}
+                      role={t('colours.bgRole')}
                       value={state.backgroundInput}
                       parsed={background}
                       onChange={judge.setBackgroundInput}
                       onCopy={
-                        background.ok ? () => void handleCopy(toHexValue(background.color), 'background') : undefined
+                        background.ok
+                          ? () => void handleCopy(toHexValue(background.color), t('toast.copiedLabel.background'))
+                          : undefined
                       }
                     />
 
                     <details>
                       <summary className="small" style={{ cursor: 'pointer', color: 'var(--text-muted)' }}>
-                        Page background (for translucent colours)
+                        {t('colours.pageBgSummary')}
                       </summary>
                       <div style={{ marginTop: '0.6rem' }}>
                         <ColorField
                           idPrefix="page"
-                          label="Page background"
-                          role="Used to flatten any alpha channel before measuring"
+                          label={t('colours.pageBgLabel')}
+                          role={t('colours.pageBgRole')}
                           value={state.pageBackgroundInput}
                           parsed={pageBackground}
                           onChange={judge.setPageBackgroundInput}
@@ -221,45 +222,43 @@ function AppShell() {
                         className="button button--primary"
                         onClick={() => {
                           judge.recordHistory();
-                          notify('Pair saved to history.');
+                          notify(t('toast.pairSaved'));
                         }}
                         disabled={!foregroundColor || !backgroundColor}
                       >
-                        Save to history
+                        {t('colours.saveHistory')}
                       </button>
                       <button
                         type="button"
                         className="button"
                         onClick={() => {
                           if (!foregroundColor) {
-                            notify('Fix the foreground colour first.', 'error');
+                            notify(t('toast.fixForeground'), 'error');
                             return;
                           }
-                          const added = judge.addPaletteColor('Text colour', foregroundColor);
-                          if (added) notify('Foreground added to the palette.');
-                          else notify('That colour is already in the palette.', 'info');
+                          const added = judge.addPaletteColor(t('colours.textColourName'), foregroundColor);
+                          notify(added ? t('toast.fgSaved') : t('toast.duplicate'), added ? 'success' : 'info');
                         }}
                         disabled={!foregroundColor}
                       >
                         <PaletteIcon />
-                        Save foreground
+                        {t('colours.saveForeground')}
                       </button>
                       <button
                         type="button"
                         className="button"
                         onClick={() => {
                           if (!backgroundColor) {
-                            notify('Fix the background colour first.', 'error');
+                            notify(t('toast.fixBackground'), 'error');
                             return;
                           }
-                          const added = judge.addPaletteColor('Surface colour', backgroundColor);
-                          if (added) notify('Background added to the palette.');
-                          else notify('That colour is already in the palette.', 'info');
+                          const added = judge.addPaletteColor(t('colours.surfaceColourName'), backgroundColor);
+                          notify(added ? t('toast.bgSaved') : t('toast.duplicate'), added ? 'success' : 'info');
                         }}
                         disabled={!backgroundColor}
                       >
                         <PaletteIcon />
-                        Save background
+                        {t('colours.saveBackground')}
                       </button>
                     </div>
                   </div>
@@ -316,17 +315,14 @@ function AppShell() {
                   <section className="card" aria-labelledby="preview-empty-heading">
                     <div className="card__header">
                       <h2 className="card__title" id="preview-empty-heading">
-                        Live preview
+                        {t('preview.emptyHeading')}
                       </h2>
                     </div>
                     <div className="card__body">
                       <div className="empty-state">
                         <LayersIcon />
-                        <h3>Preview appears once both colours are valid</h3>
-                        <p>
-                          Enter a valid foreground and background to see real text, buttons and links rendered in that
-                          pair, plus colour-vision simulations.
-                        </p>
+                        <h3>{t('preview.emptyTitle')}</h3>
+                        <p>{t('preview.emptyBody')}</p>
                       </div>
                     </div>
                   </section>
@@ -344,17 +340,19 @@ function AppShell() {
                 pageBackground={pageBackgroundColor}
                 onAdd={(name, color, role) => {
                   const added = judge.addPaletteColor(name, color);
-                  if (added) notify(`${role === 'text' ? 'Text' : 'Surface'} colour saved.`);
-                  else notify('That colour is already in the palette.', 'info');
+                  notify(
+                    added ? t(role === 'text' ? 'toast.savedText' : 'toast.savedSurface') : t('toast.duplicate'),
+                    added ? 'success' : 'info',
+                  );
                 }}
                 onRemove={(id) => {
                   judge.removePaletteColor(id);
-                  notify('Colour removed.');
+                  notify(t('toast.removed'));
                 }}
                 onRename={judge.renamePaletteColor}
                 onUse={(entry, role) => {
                   judge.usePaletteColor(entry, role);
-                  notify('Applied to the workspace.');
+                  notify(t('toast.applied'));
                 }}
                 onCopy={(text, label) => void handleCopy(text, label)}
               />
@@ -384,21 +382,22 @@ function AppShell() {
       <footer className="footer">
         <div className="footer__inner">
           <span>
-            ContrastJudge — MIT licensed. Built by{' '}
+            {/* Split into prefix/suffix so the handle can be a real link without printing twice. */}
+            {t('footer.licensePrefix')}{' '}
             <a href={AUTHOR_X_URL} target="_blank" rel="noopener noreferrer">
-              {AUTHOR_X_HANDLE} on X
-            </a>
-            . No analytics, no accounts, no server.
+              {AUTHOR_X_HANDLE}
+            </a>{' '}
+            {t('footer.licenseSuffix')}
           </span>
           <span className="footer__links">
             <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
               <GitHubIcon style={{ width: 14, height: 14, verticalAlign: '-2px', marginRight: 4 }} />
-              GitHub
+              {t('footer.github')}
             </a>
             <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noopener noreferrer">
-              WCAG 2.2
+              {t('footer.wcag')}
             </a>
-            <a href="#main-content">Back to top</a>
+            <a href="#main-content">{t('common.backToTop')}</a>
           </span>
         </div>
       </footer>
@@ -408,8 +407,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <AppShell />
-    </ToastProvider>
+    <I18nProvider>
+      <ToastProvider>
+        <AppShell />
+      </ToastProvider>
+    </I18nProvider>
   );
 }

@@ -118,7 +118,7 @@ describe('ContrastJudge app shell', () => {
     await user.click(screen.getByRole('button', { name: /Save to history/i }));
     const history = screen.getByRole('heading', { name: /Recent checks/i }).closest('.card');
     expect(history).not.toBeNull();
-    expect(within(history as HTMLElement).getByText(/#5B6478 on #FFFFFF/i)).toBeInTheDocument();
+    expect(within(history as HTMLElement).getByText(/#5B6478 \/ #FFFFFF/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Save foreground/i }));
     expect(await screen.findByText(/Foreground added to the palette/i)).toBeInTheDocument();

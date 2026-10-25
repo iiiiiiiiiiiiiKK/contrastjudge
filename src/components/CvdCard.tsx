@@ -5,6 +5,7 @@ import { CVD_DEFINITIONS, simulateCvd, simulatePair } from '../lib/cvd';
 import type { CvdType } from '../lib/cvd';
 import { formatRatio } from '../lib/wcag';
 import type { CvdSelection } from '../types';
+import { useI18n } from '../i18n';
 import { AlertIcon, CheckIcon, CrossIcon, EyeIcon } from './Icons';
 import { Card } from './Card';
 
@@ -29,6 +30,7 @@ export function CvdCard({
   onToggle,
   onSeverityChange,
 }: CvdCardProps) {
+  const { t } = useI18n();
   const results = useMemo(
     () =>
       simulatePair(foreground, background, {
@@ -39,13 +41,10 @@ export function CvdCard({
     [foreground, background, severity, threshold, selected],
   );
 
-  const sampleText = 'The quick brown fox';
-  const sampleSecondary = 'Secondary text at 90% size';
-
   return (
-    <Card id="cvd" title="Colour-vision simulation" icon={<EyeIcon />} hint="Machado 2009 model · illustrative only">
+    <Card id="cvd" title={t('cvd.title')} icon={<EyeIcon />} hint={t('cvd.hint')}>
       <div className="stack">
-        <div className="chip-row" role="group" aria-label="Colour-vision deficiencies to simulate">
+        <div className="chip-row" role="group" aria-label={t('cvd.typesLabel')}>
           {CVD_DEFINITIONS.map((definition) => {
             const checked = selected.includes(definition.id);
             return (
@@ -53,7 +52,7 @@ export function CvdCard({
                 key={definition.id}
                 className="checkbox-chip"
                 data-checked={checked}
-                title={definition.description}
+                title={t(definition.descriptionKey)}
               >
                 <input
                   type="checkbox"
@@ -61,14 +60,14 @@ export function CvdCard({
                   onChange={() => onToggle(definition.id)}
                   aria-describedby="cvd-prevalence-note"
                 />
-                {definition.shortName}
+                {t(definition.shortNameKey)}
               </label>
             );
           })}
         </div>
 
         <div className="field">
-          <label htmlFor="cvd-severity">Severity</label>
+          <label htmlFor="cvd-severity">{t('cvd.severity')}</label>
           <div className="range-row">
             <input
               id="cvd-severity"
@@ -83,13 +82,13 @@ export function CvdCard({
             <output htmlFor="cvd-severity">{Math.round(severity * 100)}%</output>
           </div>
           <span className="small muted" id="cvd-severity-help">
-            0% = normal colour vision, 100% = full dichromacy. Values in between model anomalous trichromacy.
+            {t('cvd.severityHelp')}
           </span>
         </div>
 
         {results.length === 0 ? (
           <p className="small muted" role="status">
-            Select at least one simulation to compare how this pair changes.
+            {t('cvd.selectOne')}
           </p>
         ) : (
           <div className="cvd-grid">
@@ -102,8 +101,8 @@ export function CvdCard({
                     className="cvd-card__sample"
                     style={{ background: simulatedBg, color: formatRgb(result.foreground) }}
                   >
-                    <strong style={{ fontWeight: 700 }}>{sampleText}</strong>
-                    <span style={{ fontSize: '0.82em' }}>{sampleSecondary}</span>
+                    <strong style={{ fontWeight: 700 }}>{t('cvd.sampleText')}</strong>
+                    <span style={{ fontSize: '0.82em' }}>{t('cvd.sampleSecondary')}</span>
                     <span
                       style={{
                         display: 'inline-block',
@@ -116,25 +115,25 @@ export function CvdCard({
                         fontWeight: 650,
                       }}
                     >
-                      Button
+                      {t('cvd.sampleButton')}
                     </span>
                   </div>
                   <div className="cvd-card__meta">
-                    <span className="cvd-card__title">{definition?.shortName ?? result.type}</span>
+                    <span className="cvd-card__title">{t(definition?.shortNameKey ?? 'cvd.protanShort')}</span>
                     <span className="ratio-cell">
                       {formatRatio(result.ratio)}{' '}
                       <span className={`status ${result.failsThreshold ? 'status--fail' : 'status--pass'}`}>
                         {result.failsThreshold ? <CrossIcon /> : <CheckIcon />}
-                        {result.failsThreshold ? `below ${threshold}:1` : `meets ${threshold}:1`}
+                        {t(result.failsThreshold ? 'cvd.below' : 'cvd.meets', { threshold })}
                       </span>
                     </span>
                     <span>
-                      {result.foregroundHex} on {result.backgroundHex}
+                      {result.foregroundHex} / {result.backgroundHex}
                     </span>
                     <span>
                       {result.type === 'achromat'
-                        ? 'Greyscale conversion based on perceived luminance.'
-                        : definition?.prevalence}
+                        ? t('cvd.achromatNote')
+                        : t(definition?.prevalenceKey ?? 'cvd.protanPrevalence')}
                     </span>
                   </div>
                 </div>
@@ -146,23 +145,23 @@ export function CvdCard({
         <div className="callout callout--warn" id="cvd-prevalence-note">
           <AlertIcon />
           <div>
-            <strong>Simulations are an approximation, not a diagnosis.</strong> Real colour vision varies between
-            people, changes with age and lighting, and no matrix can stand in for testing with users. Treat a red flag
-            here as a prompt to add a second, non-colour signal.
+            <strong>{t('cvd.disclaimerTitle')}</strong> {t('cvd.disclaimerBody')}
           </div>
         </div>
 
         <p className="small muted">
-          Matrices from Machado, Oliveira &amp; Fernandes (2009) applied to linear-light sRGB, with interpolation
-          between the published 0.1 severity steps. Original foreground {rgbToHex(foreground).toUpperCase()},
-          background {rgbToHex(background).toUpperCase()}.
+          {t('cvd.footnote')}{' '}
+          {t('cvd.footnotePair', {
+            fg: rgbToHex(foreground).toUpperCase(),
+            bg: rgbToHex(background).toUpperCase(),
+          })}
         </p>
       </div>
     </Card>
   );
 }
 
-/** Standalone single-colour preview used by the palette tab. */
+/** Standalone single-colour preview used by the palette rows. */
 export function CvdSwatchRow({
   color,
   types = ['protan', 'deutan', 'tritan', 'achromat'],
@@ -170,23 +169,25 @@ export function CvdSwatchRow({
   color: RGBA;
   types?: readonly CvdType[];
 }) {
+  const { t } = useI18n();
   return (
     <div className="chip-row">
       {types.map((type) => {
         const definition = CVD_DEFINITIONS.find((item) => item.id === type);
         const simulated = simulateCvd(color, type, 1);
+        const label = t(definition?.shortNameKey ?? 'cvd.protanShort');
         return (
           <span
             key={type}
             className="pill"
-            title={`${definition?.name ?? type}: ${rgbToHex(simulated).toUpperCase()}`}
+            title={`${t(definition?.nameKey ?? 'cvd.protanName')}: ${rgbToHex(simulated).toUpperCase()}`}
           >
             <span
               className="swatch-dot"
               style={{ background: formatRgb(simulated), marginRight: 0 }}
               aria-hidden="true"
             />
-            {definition?.shortName ?? type}
+            {label}
           </span>
         );
       })}

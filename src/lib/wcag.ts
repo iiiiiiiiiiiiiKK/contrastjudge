@@ -14,9 +14,15 @@
  *
  * IMPORTANT scope note: meeting these ratios satisfies the contrast success criteria for a
  * specific pair of colours. It does not make a page conform to WCAG as a whole.
+ *
+ * Human-readable output is returned as translatable `Message` values; formatRatio() stays
+ * locale-neutral because ratios are numerals with a colon.
  */
 import type { RGBA } from './color';
 import { normalizeColor } from './color';
+import { msg } from '../i18n/messages';
+import type { Message } from '../i18n/messages';
+import type { TranslationKey } from '../i18n/translations';
 
 export type WcagLevel = 'AA' | 'AAA';
 export type TextSizeKind = 'normal' | 'large';
@@ -155,23 +161,28 @@ export interface ThresholdResult {
   readonly margin: number;
   readonly summary: string;
   /** Explains the outcome in one sentence, including the reason when it fails. */
-  readonly explanation: string;
+  readonly explanation: Message;
 }
 
-function descriptionOf(definition: ThresholdDefinition): string {
-  if (definition.kind === 'non-text') return 'UI components and graphical objects';
-  return definition.size === 'large' ? 'large text' : 'normal-size text';
-}
-
-/** Compares an unrounded ratio against one threshold and explains the outcome. */
+/**
+ * Compares an unrounded ratio against one threshold and explains the outcome.
+ * The explanation is a `Message` whose `target` param is itself a dictionary key, resolved at
+ * render time so the sentence reads correctly in either language.
+ */
 export function evaluateThresholdAgainst(definition: ThresholdDefinition, ratio: number): ThresholdResult {
-  // Unrounded comparison, as required by the Understanding document for SC 1.4.3.
   const passes = ratio >= definition.threshold;
   const margin = ratio - definition.threshold;
-  const target = `${definition.threshold}:1`;
-  const explanation = passes
-    ? `Passes ${definition.criterion} (Level ${definition.level}): ${formatRatio(ratio)} meets the ${target} threshold for ${descriptionOf(definition)}.`
-    : `Fails ${definition.criterion} (Level ${definition.level}): ${formatRatio(ratio)} is below the ${target} threshold for ${descriptionOf(definition)}, short by ${roundRatio(-margin, 2)}.`;
+
+  // `target` is itself a message so the sentence stays grammatical in every language.
+  const explanation = msg(passes ? 'result.explainPass' : 'result.explainFail', {
+    criterion: definition.criterion,
+    level: definition.level,
+    ratio: formatRatio(ratio),
+    threshold: definition.threshold,
+    target: msg(targetKeyFor(definition)),
+    margin: roundRatio(-margin, 2),
+  });
+
   return {
     id: definition.id,
     criterion: definition.criterion,
@@ -186,6 +197,12 @@ export function evaluateThresholdAgainst(definition: ThresholdDefinition, ratio:
     summary: definition.summary,
     explanation,
   };
+}
+
+/** The dictionary key describing what a threshold applies to. */
+export function targetKeyFor(definition: ThresholdDefinition): TranslationKey {
+  if (definition.kind === 'non-text') return 'result.targetNonText';
+  return definition.size === 'large' ? 'result.targetLargeText' : 'result.targetNormalText';
 }
 
 export interface ContrastReport {
@@ -210,7 +227,7 @@ export interface ContrastReport {
   /** Highest WCAG level fully satisfied for this pair. */
   readonly bestLevel: 'Fail AA' | 'AA' | 'AAA';
   /** Concrete suggestions describing what would need to change. */
-  readonly advice: readonly string[];
+  readonly advice: readonly Message[];
 }
 
 /** The opaque colour pair WCAG actually evaluates, after flattening alpha. */
@@ -311,43 +328,31 @@ function buildAdvice(input: {
   passesAaa: boolean;
   passesNonText: boolean;
   level: WcagLevel;
-}): string[] {
-  const advice: string[] = [];
+}): Message[] {
+  const advice: Message[] = [];
   const { ratio, largeText } = input;
   const target = input.level === 'AAA' ? (largeText ? 4.5 : 7) : largeText ? 3 : 4.5;
 
   if (ratio >= target) {
     if (input.passesAaa) {
-      advice.push('This pair clears Level AAA for text. No further adjustment is needed for contrast.');
+      advice.push(msg('result.advicePassAaa'));
     } else {
-      advice.push(
-        `This pair meets Level ${input.level}. To reach Level AAA as well, raise the ratio to ${largeText ? '4.5:1' : '7:1'}.`,
-      );
+      advice.push(msg('result.advicePassNotAaa', { level: input.level, target: largeText ? 4.5 : 7 }));
     }
   } else {
     const needed = target / ratio;
-    advice.push(
-      `Increase the ratio from ${formatRatio(ratio)} to at least ${target}:1 — the luminance gap has to grow by about ${needed.toFixed(2)}×.`,
-    );
-    if (typicalLuminanceForRatio(ratio) > 0.5) {
-      advice.push(
-        'The pair is already fairly light overall: darken the foreground, or lighten the background if the foreground must stay.',
-      );
-    } else {
-      advice.push(
-        'The pair is fairly dark overall: lighten the foreground, or darken the background if the foreground must stay.',
-      );
-    }
+    advice.push(msg('result.adviceIncrease', { ratio: formatRatio(ratio), target, factor: needed.toFixed(2) }));
+    advice.push(msg(typicalLuminanceForRatio(ratio) > 0.5 ? 'result.adviceDarken' : 'result.adviceLighten'));
   }
 
   if (!input.passesNonText) {
-    advice.push('SC 1.4.11 also expects 3:1 for UI component boundaries such as inputs, icons and focus rings.');
+    advice.push(msg('result.adviceNonText'));
   }
   if (largeText && !input.passesAa) {
-    advice.push('Large text has a lower bar (3:1 at AA), but this pair does not even reach that.');
+    advice.push(msg('result.adviceLargeTextLower'));
   }
   if (!largeText && ratio >= 3 && ratio < 4.5) {
-    advice.push('This pair would pass at AA if the text were large: 18pt/24px, or 14pt/18.66px bold.');
+    advice.push(msg('result.adviceWouldPassIfLarge'));
   }
   return advice;
 }
