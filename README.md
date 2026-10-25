@@ -232,6 +232,24 @@ npm run test:e2e      # Playwright, all three viewport profiles
 
 CI runs both jobs on every push and pull request — see [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
+### Production verification
+
+Every deploy is checked against the live URL, not just against `dist/`:
+
+```bash
+npm run verify:production
+```
+
+This drives a real Chromium at desktop and iPhone 14 viewports against
+<https://iiiiiiiiiiiiikk.github.io/contrastjudge/> and asserts, among other things: 21.00:1 for black
+on white, 4.54:1 for `#767676`, 4.48:1 (fail) for `#777777`, `rgb()`/`hsl()` input, rejection of
+`#12345`, that applying a suggestion flips the verdict to “Passes AA”, that the CSS and JSON exports
+contain the expected content, that a `.css` download starts, that the batch table renders, that dark
+mode survives a reload, that there is no horizontal overflow at 390px, that the workspace collapses to
+one column on a phone, and that the page logs zero console errors.
+
+Last run: **25/25 checks passed** against the production deployment.
+
 ## Deployment
 
 ### GitHub Pages (current production host)
