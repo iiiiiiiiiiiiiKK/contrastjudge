@@ -1,0 +1,33 @@
+node_modules/
+dist/
+dist-ssr/
+coverage/
+.playwright/
+playwright-report/
+test-results/
+blob-report/
+.reports/
+
+# Local environment files — never commit real values
+.env
+.env.*
+!.env.example
+
+# Reference-calculation sandbox (third-party packages used only to generate fixtures)
+.refcalc/
+
+# Editor and OS noise
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Generated screenshots stay out of the build; docs/screenshots is curated and committed
+docs/screenshots/*.tmp.png
