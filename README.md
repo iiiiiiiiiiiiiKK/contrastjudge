@@ -186,21 +186,21 @@ Requires Node.js **20.19+** or **22.12+** (Vite 8).
 
 ### Scripts
 
-| Command                     | What it does                                                |
-| --------------------------- | ----------------------------------------------------------- |
-| `npm run dev`               | Vite dev server with HMR                                    |
-| `npm run build`             | Typecheck (`tsc --noEmit`) then production build to `dist/` |
-| `npm run preview`           | Serve the build at `http://127.0.0.1:4590/contrastjudge/`   |
-| `npm run typecheck`         | TypeScript only                                             |
-| `npm run lint`              | ESLint (typescript-eslint, react-hooks, react-refresh)      |
-| `npm run format`            | Prettier write                                              |
-| `npm test`                  | Vitest unit + component tests                               |
-| `npm run test:watch`        | Vitest in watch mode                                        |
-| `npm run test:e2e`          | Playwright: desktop + iPhone + Pixel viewports              |
-| `npm run verify:production` | Smoke-test the deployed site with a real browser            |
-| `npm run audit:a11y`        | axe-core audit of seven page states of the deployment       |
-| `npm run check:readme`      | Confirm every relative link and image in this file exists   |
-| `npm run verify`            | typecheck → lint → test → build                             |
+| Command                     | What it does                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------- |
+| `npm run dev`               | Vite dev server with HMR                                                                  |
+| `npm run build`             | Typecheck (`tsc --noEmit`) then production build to `dist/`                               |
+| `npm run preview`           | Serve the build at `http://127.0.0.1:4590/contrastjudge/`                                 |
+| `npm run typecheck`         | TypeScript only                                                                           |
+| `npm run lint`              | ESLint (typescript-eslint, react-hooks, react-refresh)                                    |
+| `npm run format`            | Prettier write                                                                            |
+| `npm test`                  | Vitest unit + component tests                                                             |
+| `npm run test:watch`        | Vitest in watch mode                                                                      |
+| `npm run test:e2e`          | Playwright: desktop + iPhone + Pixel viewports                                            |
+| `npm run verify:production` | Smoke-test the deployed site with a real browser                                          |
+| `npm run audit:a11y`        | axe-core audit of seven page states of the deployment                                     |
+| `npm run check:links`       | Assert one consistent repo slug everywhere, and that every relative link and image exists |
+| `npm run verify`            | typecheck → lint → test → build                                                           |
 
 ## Environment variables
 
@@ -218,7 +218,7 @@ See [`.env.example`](.env.example).
 ## Testing
 
 ```text
-Unit + component (Vitest, jsdom)     132 tests, 9 files
+Unit + component (Vitest, jsdom)     136 tests, 10 files
 End-to-end (Playwright, Chromium)     101 passed / 4 skipped, 3 viewport profiles
 ```
 
@@ -235,6 +235,7 @@ Coverage by file:
 | `tests/app.test.tsx`             | Invalid input shows an error and never a guessed ratio; swap is symmetric; AA/AAA switching; keyboard tab navigation; theme persistence; copy failure surfaces an error                        |
 | `tests/language-switch.test.tsx` | Switching to Chinese flips every tab, label and error message; the ratio is unchanged; the choice survives a remount; a `zh`-preferring browser starts in Chinese                              |
 | `tests/i18n.test.ts`             | Both dictionaries share one key set and one placeholder set; no Chinese value is left silently in English; nested messages resolve per locale; no rendered string contains `undefined`         |
+| `tests/links.test.ts`            | Every `github.com/<account>/contrastjudge` mention uses one slug, the account shape is exact, the Pages host matches it, and the author link is the documented X profile                       |
 | `e2e/app.spec.ts`                | The same numbers reach the real UI in a real browser; downloads work; no horizontal overflow at any viewport; workspace stacks on a phone; tap targets; focus order; live-region announcements |
 | `e2e/language.spec.ts`           | The header switch is keyboard reachable and flips the whole UI; the downloaded Markdown report is Chinese; the choice survives a reload; the phone header has no overflow in either language   |
 
@@ -263,7 +264,9 @@ contain the expected content, that a `.css` download starts, that the batch tabl
 mode survives a reload, that there is no horizontal overflow at 390px, that the workspace collapses to
 one column on a phone, and that the page logs zero console errors.
 
-Last run: **33/33 checks passed** against the production deployment, in English and Chinese.
+Last run: **36/36 checks passed** against the production deployment, in English and Chinese. It also
+asserts that the in-app GitHub link points at the real repository — that check exists because a
+single-character typo in the account name shipped once and 404ed every outbound link.
 
 ## Deployment
 

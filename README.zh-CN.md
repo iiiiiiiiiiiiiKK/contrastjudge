@@ -163,20 +163,20 @@ npm run dev
 
 ### 常用命令
 
-| 命令                        | 作用                                                     |
-| --------------------------- | -------------------------------------------------------- |
-| `npm run dev`               | Vite 开发服务器（HMR）                                   |
-| `npm run build`             | 类型检查（`tsc --noEmit`）后生产构建到 `dist/`           |
-| `npm run preview`           | 本地预览构建产物：`http://127.0.0.1:4590/contrastjudge/` |
-| `npm run typecheck`         | 仅 TypeScript 检查                                       |
-| `npm run lint`              | ESLint（typescript-eslint、react-hooks、react-refresh）  |
-| `npm run format`            | Prettier 格式化                                          |
-| `npm test`                  | Vitest 单元 + 组件测试                                   |
-| `npm run test:e2e`          | Playwright：桌面 + iPhone + Pixel 三种视口               |
-| `npm run verify:production` | 用真实浏览器冒烟测试线上站点                             |
-| `npm run audit:a11y`        | 对线上站点 7 种页面状态跑 axe-core                       |
-| `npm run check:readme`      | 校验 README 中的相对链接与图片是否存在                   |
-| `npm run verify`            | 类型检查 → lint → 测试 → 构建                            |
+| 命令                        | 作用                                                             |
+| --------------------------- | ---------------------------------------------------------------- |
+| `npm run dev`               | Vite 开发服务器（HMR）                                           |
+| `npm run build`             | 类型检查（`tsc --noEmit`）后生产构建到 `dist/`                   |
+| `npm run preview`           | 本地预览构建产物：`http://127.0.0.1:4590/contrastjudge/`         |
+| `npm run typecheck`         | 仅 TypeScript 检查                                               |
+| `npm run lint`              | ESLint（typescript-eslint、react-hooks、react-refresh）          |
+| `npm run format`            | Prettier 格式化                                                  |
+| `npm test`                  | Vitest 单元 + 组件测试                                           |
+| `npm run test:e2e`          | Playwright：桌面 + iPhone + Pixel 三种视口                       |
+| `npm run verify:production` | 用真实浏览器冒烟测试线上站点                                     |
+| `npm run audit:a11y`        | 对线上站点 7 种页面状态跑 axe-core                               |
+| `npm run check:links`       | 校验全仓库账号名唯一且正确，并检查 README 相对链接与图片是否存在 |
+| `npm run verify`            | 类型检查 → lint → 测试 → 构建                                    |
 
 ## 环境变量
 
@@ -194,25 +194,26 @@ npm run dev
 ## 测试
 
 ```text
-单元 + 组件（Vitest, jsdom）      132 个测试，9 个文件
+单元 + 组件（Vitest, jsdom）      136 个测试，10 个文件
 端到端（Playwright, Chromium）     101 通过 / 4 跳过，3 种视口配置
 ```
 
 按文件说明：
 
-| 文件                             | 验证内容                                                                                                   |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `tests/color.test.ts`            | 所有支持的语法都解析出正确通道；10 种非法写法被拒绝并给出类型化错误；RGB↔HSL 在 4,096 个采样颜色上往返一致 |
-| `tests/wcag.test.ts`             | 传递函数、亮度权重、21:1 与 1:1 极值、990 组独立参考数据、AA/AAA 边界、大号文本判定、alpha 压平            |
-| `tests/suggest.test.ts`          | 候选色一定达到目标、色相偏移小于 3°、结果确定、目标不可达时如实返回空                                      |
-| `tests/cvd.test.ts`              | Machado 矩阵复现论文中对纯红/纯蓝的取值、插值单调、alpha 保留、灰色不受影响                                |
-| `tests/exports.test.ts`          | CSS 变量命名（含 `ß → ss` 折叠）、重名处理、对比度注释、JSON 结构、Markdown/CSV 转义                       |
-| `tests/batch.test.ts`            | 五种行格式、注释跳过、逐行错误定位（含行号）                                                               |
-| `tests/app.test.tsx`             | 非法输入只报错不猜色；交换前后对比度一致；AA/AAA 切换；标签页键盘导航；主题持久化；复制失败会提示          |
-| `tests/i18n.test.ts`             | 两套词典键集与占位符集完全一致；中文词典没有漏翻的英文；嵌套消息按语言解析；渲染结果不含 `undefined`       |
-| `tests/language-switch.test.tsx` | 切换中文后标签页、字段、错误提示全部翻译；对比度不变；重新挂载后仍为中文；系统语言为中文时默认中文         |
-| `e2e/app.spec.ts`                | 真实浏览器里得到同样的数值；下载可用；任何视口都无横向滚动；手机端单列堆叠；触点尺寸；焦点顺序；实时播报   |
-| `e2e/language.spec.ts`           | 顶栏切换可键盘操作且整页生效；下载的 Markdown 报告是中文；刷新后保持；手机顶栏在两种语言下都不溢出         |
+| 文件                             | 验证内容                                                                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `tests/color.test.ts`            | 所有支持的语法都解析出正确通道；10 种非法写法被拒绝并给出类型化错误；RGB↔HSL 在 4,096 个采样颜色上往返一致                           |
+| `tests/wcag.test.ts`             | 传递函数、亮度权重、21:1 与 1:1 极值、990 组独立参考数据、AA/AAA 边界、大号文本判定、alpha 压平                                      |
+| `tests/suggest.test.ts`          | 候选色一定达到目标、色相偏移小于 3°、结果确定、目标不可达时如实返回空                                                                |
+| `tests/cvd.test.ts`              | Machado 矩阵复现论文中对纯红/纯蓝的取值、插值单调、alpha 保留、灰色不受影响                                                          |
+| `tests/exports.test.ts`          | CSS 变量命名（含 `ß → ss` 折叠）、重名处理、对比度注释、JSON 结构、Markdown/CSV 转义                                                 |
+| `tests/batch.test.ts`            | 五种行格式、注释跳过、逐行错误定位（含行号）                                                                                         |
+| `tests/app.test.tsx`             | 非法输入只报错不猜色；交换前后对比度一致；AA/AAA 切换；标签页键盘导航；主题持久化；复制失败会提示                                    |
+| `tests/i18n.test.ts`             | 两套词典键集与占位符集完全一致；中文词典没有漏翻的英文；嵌套消息按语言解析；渲染结果不含 `undefined`                                 |
+| `tests/language-switch.test.tsx` | 切换中文后标签页、字段、错误提示全部翻译；对比度不变；重新挂载后仍为中文；系统语言为中文时默认中文                                   |
+| `tests/links.test.ts`            | 全仓库所有 `github.com/<账号>/contrastjudge` 引用使用同一个账号名，账号长度与形态正确，Pages 域名与之匹配，作者链接指向约定的 X 主页 |
+| `e2e/app.spec.ts`                | 真实浏览器里得到同样的数值；下载可用；任何视口都无横向滚动；手机端单列堆叠；触点尺寸；焦点顺序；实时播报                             |
+| `e2e/language.spec.ts`           | 顶栏切换可键盘操作且整页生效；下载的 Markdown 报告是中文；刷新后保持；手机顶栏在两种语言下都不溢出                                   |
 
 运行全部检查：
 
@@ -236,7 +237,8 @@ npm run verify:production
 翻转为「通过」、CSS/JSON 导出内容正确、`.css` 下载可用、批量表格渲染、深色模式刷新后保持、
 390px 下无横向溢出、手机端单列堆叠、控制台零错误。
 
-最近一次运行：**33/33 全部通过**（中英文均验证）。
+最近一次运行：**36/36 全部通过**（中英文均验证）。其中包含一项「应用内 GitHub 链接必须指向真实仓库」的断言 ——
+加这项是因为曾经因为账号名少打两个 `i`，导致所有外链 404。
 
 ## 部署
 

@@ -15,6 +15,25 @@ async function setPair(page, fg, bg) {
   await page.getByLabel('Background (surface)', { exact: true }).fill(bg);
 }
 
+/**
+ * Checks an outbound URL from Node rather than from the page: a blocked egress would otherwise be
+ * logged as a page console error and pollute the "no console errors" assertion.
+ * Returns the HTTP status, or 'network-error' when this machine cannot reach the host at all.
+ */
+async function headFromNode(url) {
+  if (url === '') return 'no-url';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    return response.status;
+  } catch {
+    return 'network-error';
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 (async () => {
   const browser = await chromium.launch();
 
@@ -43,14 +62,7 @@ async function setPair(page, fg, bg) {
     repoHref === 'https://github.com/iiiiiiiiiiiiiKK/contrastjudge',
     repoHref ?? 'none',
   );
-  const repoStatus = await page.evaluate(async (url) => {
-    try {
-      const response = await fetch(url, { method: 'HEAD' });
-      return response.status;
-    } catch {
-      return 'network-error';
-    }
-  }, repoHref ?? '');
+  const repoStatus = await headFromNode(repoHref ?? '');
   record('repository URL resolves', repoStatus === 200 || repoStatus === 'network-error', String(repoStatus));
 
   const xHref = await page.getByRole('link', { name: /Author on X/i }).getAttribute('href');
