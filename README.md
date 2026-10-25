@@ -181,7 +181,7 @@ Requires Node.js **20.19+** or **22.12+** (Vite 8).
 | -------------------- | ----------------------------------------------------------- |
 | `npm run dev`        | Vite dev server with HMR                                    |
 | `npm run build`      | Typecheck (`tsc --noEmit`) then production build to `dist/` |
-| `npm run preview`    | Serve the production build locally                          |
+| `npm run preview`    | Serve the build at `http://127.0.0.1:4590/contrastjudge/`   |
 | `npm run typecheck`  | TypeScript only                                             |
 | `npm run lint`       | ESLint (typescript-eslint, react-hooks, react-refresh)      |
 | `npm run format`     | Prettier write                                              |
