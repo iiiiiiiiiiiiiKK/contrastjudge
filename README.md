@@ -177,18 +177,21 @@ Requires Node.js **20.19+** or **22.12+** (Vite 8).
 
 ### Scripts
 
-| Command              | What it does                                                |
-| -------------------- | ----------------------------------------------------------- |
-| `npm run dev`        | Vite dev server with HMR                                    |
-| `npm run build`      | Typecheck (`tsc --noEmit`) then production build to `dist/` |
-| `npm run preview`    | Serve the build at `http://127.0.0.1:4590/contrastjudge/`   |
-| `npm run typecheck`  | TypeScript only                                             |
-| `npm run lint`       | ESLint (typescript-eslint, react-hooks, react-refresh)      |
-| `npm run format`     | Prettier write                                              |
-| `npm test`           | Vitest unit + component tests                               |
-| `npm run test:watch` | Vitest in watch mode                                        |
-| `npm run test:e2e`   | Playwright: desktop + iPhone + Pixel viewports              |
-| `npm run verify`     | typecheck → lint → test → build                             |
+| Command                     | What it does                                                |
+| --------------------------- | ----------------------------------------------------------- |
+| `npm run dev`               | Vite dev server with HMR                                    |
+| `npm run build`             | Typecheck (`tsc --noEmit`) then production build to `dist/` |
+| `npm run preview`           | Serve the build at `http://127.0.0.1:4590/contrastjudge/`   |
+| `npm run typecheck`         | TypeScript only                                             |
+| `npm run lint`              | ESLint (typescript-eslint, react-hooks, react-refresh)      |
+| `npm run format`            | Prettier write                                              |
+| `npm test`                  | Vitest unit + component tests                               |
+| `npm run test:watch`        | Vitest in watch mode                                        |
+| `npm run test:e2e`          | Playwright: desktop + iPhone + Pixel viewports              |
+| `npm run verify:production` | Smoke-test the deployed site with a real browser            |
+| `npm run audit:a11y`        | axe-core audit of seven page states of the deployment       |
+| `npm run check:readme`      | Confirm every relative link and image in this file exists   |
+| `npm run verify`            | typecheck → lint → test → build                             |
 
 ## Environment variables
 

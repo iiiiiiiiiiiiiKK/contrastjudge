@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "verify:production": "node scripts/verify-production.cjs",
     "audit:a11y": "node scripts/a11y-audit.cjs",
-    "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "check:readme": "node scripts/check-readme-links.cjs"
   },
   "dependencies": {
     "react": "^19.3.1",
